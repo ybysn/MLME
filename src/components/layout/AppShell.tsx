@@ -1,17 +1,16 @@
 /**
  * 模块职责：主布局壳组件，管理文档状态并向下分发文件操作与编辑器内容。
  * 当前输入：无（顶层组件）。
- * 当前输出：三栏布局，文件树/编辑器/大纲（含标题跳转），以及文件操作能力。
+ * 当前输出：两栏布局（左侧 SidebarPanel + 中间 EditorPanel），文件操作与大纲跳转。
  * 后续扩展点：快捷键绑定、自动保存、关闭未保存确认。
  */
 import { useState, useCallback, useMemo, useRef } from "react";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { FileTreePanel } from "../file_tree/FileTreePanel";
+import { SidebarPanel } from "./SidebarPanel";
 import {
   EditorPanel,
   type EditorPanelHandle,
 } from "../editor/EditorPanel";
-import { OutlinePanel } from "../outline/OutlinePanel";
 import { readMarkdownFile, writeMarkdownFile } from "../../services/file_service";
 import {
   type DocumentState,
@@ -28,7 +27,6 @@ export function AppShell() {
   const [doc, setDoc] = useState<DocumentState>(createEmptyDocument);
   const editorRef = useRef<EditorPanelHandle>(null);
 
-  // 实时计算大纲和统计
   const outlineResult = useMemo(() => {
     const items = parseMarkdownOutline(doc.content);
     const stats = getDocumentStats(doc.content, items.length);
@@ -39,10 +37,11 @@ export function AppShell() {
     setDoc((prev) => ({ ...prev, content, isDirty: true }));
   }, []);
 
-  /** 点击大纲条目时滚动编辑器到对应标题行 */
   const handleSelectOutlineItem = useCallback((item: MarkdownOutlineItem) => {
     editorRef.current?.scrollToLine(item.line);
   }, []);
+
+  // ── 文件操作 ──────────────────────────────────
 
   const handleNew = useCallback(() => {
     setDoc({
@@ -131,17 +130,26 @@ export function AppShell() {
     }
   }, [doc.content, doc.fileName]);
 
+  // ── 渲染 ──────────────────────────────────────
+
   return (
     <div className="app-shell">
-      <aside className="app-shell__sidebar app-shell__sidebar--left">
-        <FileTreePanel
-          fileName={doc.fileName}
-          isDirty={doc.isDirty}
-          isEditing={doc.isEditing}
-          onNew={handleNew}
-          onOpen={handleOpen}
-          onSave={handleSave}
-          onSaveAs={handleSaveAs}
+      <aside className="app-shell__sidebar">
+        <SidebarPanel
+          fileTreeProps={{
+            fileName: doc.fileName,
+            isDirty: doc.isDirty,
+            isEditing: doc.isEditing,
+            onNew: handleNew,
+            onOpen: handleOpen,
+            onSave: handleSave,
+            onSaveAs: handleSaveAs,
+          }}
+          outlineProps={{
+            outlineItems: outlineResult.items,
+            isEditing: doc.isEditing,
+            onSelectOutlineItem: handleSelectOutlineItem,
+          }}
         />
       </aside>
       <main className="app-shell__main">
@@ -151,17 +159,10 @@ export function AppShell() {
           fileName={doc.fileName}
           isDirty={doc.isDirty}
           isEditing={doc.isEditing}
+          headingCount={outlineResult.stats.headingCount}
           onContentChange={setContent}
         />
       </main>
-      <aside className="app-shell__sidebar app-shell__sidebar--right">
-        <OutlinePanel
-          outlineItems={outlineResult.items}
-          stats={outlineResult.stats}
-          isEditing={doc.isEditing}
-          onSelectOutlineItem={handleSelectOutlineItem}
-        />
-      </aside>
     </div>
   );
 }

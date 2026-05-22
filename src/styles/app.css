@@ -1,6 +1,6 @@
 /**
- * 模块职责：全局样式，定义 CSS 变量、三栏布局、面板和状态栏样式。
- * 当前范围：基础重置、布局、面板组件外观。
+ * 模块职责：全局样式，定义 CSS 变量、两栏布局、面板、Tab 和状态栏样式。
+ * 当前范围：基础重置、布局、面板组件外观、侧边栏 Tab、大纲列表。
  * 后续扩展点：主题变量切换（明亮/暗黑）、编辑器内联样式、响应式调整。
  */
 
@@ -29,8 +29,7 @@
   --color-status-bar-text: #7a7f8e;
 
   /* 布局尺寸 */
-  --sidebar-left-width: 260px;
-  --sidebar-right-width: 280px;
+  --sidebar-width: 280px;
   --status-bar-height: 28px;
 
   /* 字体 */
@@ -68,7 +67,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ===== 主布局 ===== */
+/* ===== 主布局 - 两栏 ===== */
 .app-shell {
   display: flex;
   height: 100vh;
@@ -78,21 +77,11 @@ body {
 
 .app-shell__sidebar {
   flex-shrink: 0;
+  width: var(--sidebar-width);
   height: 100%;
-  overflow-y: auto;
+  background-color: var(--color-bg-secondary);
   border-right: 1px solid var(--color-border);
-}
-
-.app-shell__sidebar--left {
-  width: var(--sidebar-left-width);
-  background-color: var(--color-bg-secondary);
-}
-
-.app-shell__sidebar--right {
-  width: var(--sidebar-right-width);
-  border-right: none;
-  border-left: 1px solid var(--color-border);
-  background-color: var(--color-bg-secondary);
+  overflow: hidden;
 }
 
 .app-shell__main {
@@ -102,6 +91,53 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--color-bg);
+}
+
+/* ===== 侧边栏面板 ===== */
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sidebar-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-tertiary);
+}
+
+.sidebar-tabs__btn {
+  flex: 1;
+  padding: 8px var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.sidebar-tabs__btn:hover {
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+}
+
+.sidebar-tabs__btn--active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  background-color: var(--color-bg);
+}
+
+.sidebar-panel__content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar-panel__content .panel {
+  height: 100%;
 }
 
 /* ===== 面板通用 ===== */
@@ -354,27 +390,4 @@ body {
   color: var(--color-text-muted);
   min-width: 24px;
   text-align: right;
-}
-
-.outline-stats {
-  padding: var(--spacing-md);
-  border-top: 1px solid var(--color-border-light);
-  flex-shrink: 0;
-}
-
-.outline-stats__item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-xs) 0;
-  font-size: var(--font-size-xs);
-}
-
-.outline-stats__label {
-  color: var(--color-text-muted);
-}
-
-.outline-stats__value {
-  color: var(--color-text-secondary);
-  font-weight: 500;
 }

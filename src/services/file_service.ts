@@ -49,3 +49,23 @@ export async function writeHtmlFile(path: string, content: string): Promise<void
 export async function exportHtmlToPdf(html: string, outputPath: string): Promise<void> {
   return invoke<void>("export_html_to_pdf", { html, outputPath });
 }
+
+/** 创建空 Markdown 文件 */
+export async function createMarkdownFile(path: string): Promise<void> {
+  return invoke<void>("create_markdown_file", { path });
+}
+
+/** 创建文件夹 */
+export async function createFolder(path: string): Promise<void> {
+  return invoke<void>("create_folder", { path });
+}
+
+/** 重命名文件或目录 */
+export async function renamePath(oldPath: string, newPath: string): Promise<void> {
+  return invoke<void>("rename_path", { oldPath, newPath });
+}
+
+/** 删除文件或目录 */
+export async function deletePath(path: string): Promise<void> {
+  return invoke<void>("delete_path", { path });
+}

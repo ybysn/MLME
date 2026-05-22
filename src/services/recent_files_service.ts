@@ -76,3 +76,19 @@ export function removeRecentFile(
   saveRecentFiles(updated);
   return updated;
 }
+
+/** 更新最近文件路径（用于重命名） */
+export function updateRecentFilePath(
+  existing: RecentFileItem[],
+  oldPath: string,
+  newPath: string,
+  newFileName: string,
+): RecentFileItem[] {
+  const updated = existing.map((item) =>
+    item.path === oldPath
+      ? { ...item, path: newPath, fileName: newFileName }
+      : item,
+  );
+  saveRecentFiles(updated);
+  return updated;
+}

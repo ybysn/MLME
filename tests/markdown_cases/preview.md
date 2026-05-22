@@ -225,8 +225,7 @@ Visit [GitHub](https://github.com) or <https://example.com> for more info.
 
 ## Image
 
-![image-000000006a106ca9-2bdc.png](preview.assets/image-000000006a106ca9-2bdc.png)
-
+![1.00](preview.assets/image-000000006a106ca9-2bdc.png)
 
 ## Horizontal Rule
 

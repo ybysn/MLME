@@ -17,6 +17,10 @@ pub fn run() {
             file_commands::list_markdown_files_in_folder,
             file_commands::write_html_file,
             file_commands::export_html_to_pdf,
+            file_commands::create_markdown_file,
+            file_commands::create_folder,
+            file_commands::rename_path,
+            file_commands::delete_path,
             asset_commands::save_image_asset,
             asset_commands::read_image_asset_as_data_url,
         ])

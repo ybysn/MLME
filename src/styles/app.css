@@ -1093,6 +1093,43 @@ body {
   padding: 0;
 }
 
+/* 右键菜单 */
+.context-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 160px;
+  padding: 4px 0;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.context-menu__item {
+  display: block;
+  width: 100%;
+  padding: 6px 14px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.context-menu__item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.context-menu__item--danger {
+  color: #dc2626;
+}
+
+.context-menu__item--danger:hover {
+  background-color: #fef2f2;
+}
+
 .welcome-recent-list {
   list-style: none;
   margin: 0;

@@ -15,6 +15,10 @@ import {
   readMarkdownFile,
   writeMarkdownFile,
   listMarkdownFilesInFolder,
+  createMarkdownFile,
+  createFolder,
+  renamePath,
+  deletePath,
   type MarkdownTreeItem,
 } from "../../services/file_service";
 import {
@@ -30,6 +34,7 @@ import {
   loadRecentFiles,
   addRecentFile,
   removeRecentFile,
+  updateRecentFilePath,
   type RecentFileItem,
 } from "../../services/recent_files_service";
 import {
@@ -316,6 +321,111 @@ export function AppShell() {
     [confirmBeforeLosingChanges, addToRecent],
   );
 
+  // ── 工作区文件操作 ────────────────────────────
+
+  const refreshWorkspaceTree = useCallback(async () => {
+    if (!currentWorkspacePath) return;
+    try {
+      const tree = await listMarkdownFilesInFolder(currentWorkspacePath);
+      setWorkspaceTree(tree);
+    } catch (err) {
+      alert(`刷新工作区失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [currentWorkspacePath]);
+
+  const handleCreateFile = useCallback(async (parentDir: string) => {
+    const name = window.prompt("输入文件名（自动添加 .md）:");
+    if (!name) return;
+    const sanitized = name.trim().replace(/[\\/:*?"<>|]/g, "");
+    if (!sanitized) { alert("文件名不能为空或包含非法字符"); return; }
+    const fileName = sanitized.endsWith(".md") ? sanitized : `${sanitized}.md`;
+    const fullPath = `${parentDir.replace(/[\\/]$/, "")}\\${fileName}`;
+    try {
+      await createMarkdownFile(fullPath);
+      await refreshWorkspaceTree();
+      confirmBeforeLosingChanges(async () => {
+        try {
+          const payload = await readMarkdownFile(fullPath);
+          setDoc({ currentPath: payload.path, fileName: payload.file_name, content: payload.content, isDirty: false, isEditing: true });
+          addToRecent(payload.path, payload.file_name);
+        } catch (err) {
+          alert(`打开文件失败: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      });
+    } catch (err) {
+      alert(`创建文件失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [refreshWorkspaceTree, confirmBeforeLosingChanges, addToRecent]);
+
+  const handleCreateFolder = useCallback(async (parentDir: string) => {
+    const name = window.prompt("输入文件夹名:");
+    if (!name) return;
+    const sanitized = name.trim().replace(/[\\/:*?"<>|]/g, "");
+    if (!sanitized) { alert("文件夹名不能为空或包含非法字符"); return; }
+    const fullPath = `${parentDir.replace(/[\\/]$/, "")}\\${sanitized}`;
+    try {
+      await createFolder(fullPath);
+      await refreshWorkspaceTree();
+    } catch (err) {
+      alert(`创建文件夹失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [refreshWorkspaceTree]);
+
+  const handleRenameItem = useCallback(async (oldPath: string, _isDir: boolean) => {
+    const oldName = oldPath.split(/[\\/]/).pop() ?? "";
+    const newName = window.prompt("输入新名称:", oldName);
+    if (!newName || newName === oldName) return;
+    const sanitized = newName.trim().replace(/[\\/:*?"<>|]/g, "");
+    if (!sanitized) { alert("名称不能为空或包含非法字符"); return; }
+
+    const parentDir = oldPath.replace(/[/\\][^/\\]*$/, "");
+    const newPath = `${parentDir}\\${sanitized}`;
+
+    try {
+      await renamePath(oldPath, newPath);
+      if (doc.currentPath === oldPath) {
+        const name = newPath.split(/[\\/]/).pop() ?? sanitized;
+        setDoc((prev) => ({ ...prev, currentPath: newPath, fileName: name }));
+        setRecentFiles((prev) => updateRecentFilePath(prev, oldPath, newPath, name));
+      }
+      await refreshWorkspaceTree();
+    } catch (err) {
+      alert(`重命名失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [doc.currentPath, refreshWorkspaceTree]);
+
+  const handleDeleteItem = useCallback(async (path: string, _isDir: boolean) => {
+    const type = _isDir ? "文件夹" : "文件";
+    const name = path.split(/[\\/]/).pop() ?? path;
+    if (!window.confirm(`确定删除${type} "${name}" 吗？此操作不可撤销。`)) return;
+
+    if (path === doc.currentPath && doc.isDirty) {
+      const action = async () => {
+        try {
+          await deletePath(path);
+          setDoc(createEmptyDocument());
+          setRecentFiles((prev) => removeRecentFile(prev, path));
+          await refreshWorkspaceTree();
+        } catch (err) {
+          alert(`删除失败: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      };
+      setUnsavedConfirm({ visible: true, action });
+      return;
+    }
+
+    try {
+      await deletePath(path);
+      if (path === doc.currentPath) {
+        setDoc(createEmptyDocument());
+        setRecentFiles((prev) => removeRecentFile(prev, path));
+      }
+      await refreshWorkspaceTree();
+    } catch (err) {
+      alert(`删除失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [doc.currentPath, doc.isDirty, refreshWorkspaceTree]);
+
   // ── 文件操作 ──────────────────────────────────
 
   const handleNew = useCallback(() => {
@@ -405,6 +515,11 @@ export function AppShell() {
                   onOpenRecentFile: handleOpenRecentFile,
                   onOpenWorkspace: handleOpenWorkspace,
                   onOpenWorkspaceFile: handleOpenWorkspaceFile,
+                  onCreateFile: handleCreateFile,
+                  onCreateFolder: handleCreateFolder,
+                  onRenameItem: handleRenameItem,
+                  onDeleteItem: handleDeleteItem,
+                  onRefreshWorkspace: () => { void refreshWorkspaceTree(); },
                 }}
                 outlineProps={{
                   outlineItems: outlineResult.items,

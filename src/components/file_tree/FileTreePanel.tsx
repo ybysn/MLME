@@ -1,9 +1,7 @@
 /**
- * 模块职责：左侧文件树面板，提供文件操作入口、工作区文件树和最近文件列表。
- * 当前输入：文件操作回调、文档状态、工作区树、最近文件列表。
- * 当前输出：操作按钮、当前文件信息、工作区文件树、最近文件列表。
+ * 模块职责：左侧文件树面板，提供文件操作入口、工作区文件树、右键菜单和最近文件列表。
  */
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type { RecentFileItem } from "../../services/recent_files_service";
 import type { MarkdownTreeItem } from "../../services/file_service";
 
@@ -23,19 +21,31 @@ export interface FileTreePanelProps {
   onOpenRecentFile: (path: string) => void;
   onOpenWorkspace: () => void;
   onOpenWorkspaceFile: (path: string) => void;
+  onCreateFile: (parentDir: string) => void;
+  onCreateFolder: (parentDir: string) => void;
+  onRenameItem: (oldPath: string, isDir: boolean) => void;
+  onDeleteItem: (path: string, isDir: boolean) => void;
+  onRefreshWorkspace: () => void;
 }
 
-/** 递归渲染工作区文件树节点 */
+interface ContextMenuState {
+  x: number;
+  y: number;
+  items: { label: string; onClick: () => void; danger?: boolean }[];
+}
+
 function WorkspaceTreeItem({
   item,
   depth,
   currentPath,
   onOpenFile,
+  onContextMenu,
 }: {
   item: MarkdownTreeItem;
   depth: number;
   currentPath: string | null;
   onOpenFile: (path: string) => void;
+  onContextMenu: (e: React.MouseEvent, targetPath: string, isDir: boolean) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -46,6 +56,7 @@ function WorkspaceTreeItem({
           className="workspace-tree__dir"
           style={{ paddingLeft: `${depth * 16}px` }}
           onClick={() => setExpanded((p) => !p)}
+          onContextMenu={(e) => onContextMenu(e, item.path, true)}
         >
           <span className="workspace-tree__arrow">{expanded ? "▾" : "▸"}</span>
           <span className="workspace-tree__name">{item.file_name}</span>
@@ -59,6 +70,7 @@ function WorkspaceTreeItem({
                 depth={depth + 1}
                 currentPath={currentPath}
                 onOpenFile={onOpenFile}
+                onContextMenu={onContextMenu}
               />
             ))}
           </ul>
@@ -74,6 +86,7 @@ function WorkspaceTreeItem({
       }`}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
       onClick={() => onOpenFile(item.path)}
+      onContextMenu={(e) => onContextMenu(e, item.path, false)}
       title={item.path}
     >
       <span className="workspace-tree__name">{item.file_name}</span>
@@ -97,7 +110,68 @@ export function FileTreePanel({
   onOpenRecentFile,
   onOpenWorkspace,
   onOpenWorkspaceFile,
+  onCreateFile,
+  onCreateFolder,
+  onRenameItem,
+  onDeleteItem,
+  onRefreshWorkspace,
 }: FileTreePanelProps) {
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const closeMenu = useCallback(() => setContextMenu(null), []);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = () => closeMenu();
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, [contextMenu, closeMenu]);
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, targetPath: string, isDir: boolean) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const parentDir = targetPath.replace(/[/\\][^/\\]*$/, "") || targetPath;
+
+      const items: ContextMenuState["items"] = [];
+
+      if (isDir) {
+        items.push(
+          { label: "新建 Markdown 文件", onClick: () => { closeMenu(); onCreateFile(targetPath); } },
+          { label: "新建文件夹", onClick: () => { closeMenu(); onCreateFolder(targetPath); } },
+          { label: "重命名", onClick: () => { closeMenu(); onRenameItem(targetPath, true); } },
+          { label: "删除", onClick: () => { closeMenu(); onDeleteItem(targetPath, true); }, danger: true },
+        );
+      } else {
+        items.push(
+          { label: "重命名", onClick: () => { closeMenu(); onRenameItem(targetPath, false); } },
+          { label: "删除", onClick: () => { closeMenu(); onDeleteItem(targetPath, false); }, danger: true },
+          { label: "新建文件到此处", onClick: () => { closeMenu(); onCreateFile(parentDir); } },
+          { label: "新建文件夹到此处", onClick: () => { closeMenu(); onCreateFolder(parentDir); } },
+        );
+      }
+
+      setContextMenu({ x: e.clientX, y: e.clientY, items });
+    },
+    [closeMenu, onCreateFile, onCreateFolder, onRenameItem, onDeleteItem],
+  );
+
+  const handleWorkspaceContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      if (!currentWorkspacePath) return;
+      e.preventDefault();
+      const items: ContextMenuState["items"] = [
+        { label: "新建 Markdown 文件", onClick: () => { closeMenu(); onCreateFile(currentWorkspacePath); } },
+        { label: "新建文件夹", onClick: () => { closeMenu(); onCreateFolder(currentWorkspacePath); } },
+        { label: "刷新", onClick: () => { closeMenu(); onRefreshWorkspace(); } },
+      ];
+      setContextMenu({ x: e.clientX, y: e.clientY, items });
+    },
+    [currentWorkspacePath, closeMenu, onCreateFile, onCreateFolder, onRefreshWorkspace],
+  );
+
   return (
     <div className="panel panel--file-tree">
       <header className="panel__header">
@@ -124,22 +198,19 @@ export function FileTreePanel({
           </div>
         )}
 
-        {/* 工作区 */}
         <section className="file-tree-section">
           <h3 className="file-tree-section__title">工作区</h3>
           {currentWorkspacePath ? (
             <>
               <div className="workspace-header">
-                <span className="workspace-header__name" title={currentWorkspacePath}>
-                  {workspaceName}
-                </span>
+                <span className="workspace-header__name" title={currentWorkspacePath}>{workspaceName}</span>
               </div>
               {workspaceTree.length === 0 ? (
-                <div className="file-tree-section__placeholder">
-                  该文件夹下暂无 Markdown 文件
+                <div className="file-tree-section__placeholder" onContextMenu={handleWorkspaceContextMenu}>
+                  该文件夹下暂无 Markdown 文件（右键新建）
                 </div>
               ) : (
-                <ul className="workspace-tree">
+                <ul className="workspace-tree" onContextMenu={handleWorkspaceContextMenu}>
                   {workspaceTree.map((item) => (
                     <WorkspaceTreeItem
                       key={item.path}
@@ -147,6 +218,7 @@ export function FileTreePanel({
                       depth={0}
                       currentPath={currentPath}
                       onOpenFile={onOpenWorkspaceFile}
+                      onContextMenu={handleContextMenu}
                     />
                   ))}
                 </ul>
@@ -159,7 +231,6 @@ export function FileTreePanel({
           )}
         </section>
 
-        {/* 最近文件 */}
         <section className="file-tree-section">
           <h3 className="file-tree-section__title">最近文件</h3>
           {recentFiles.length === 0 ? (
@@ -181,6 +252,24 @@ export function FileTreePanel({
           )}
         </section>
       </div>
+
+      {contextMenu && (
+        <div
+          ref={menuRef}
+          className="context-menu"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          {contextMenu.items.map((item, i) => (
+            <button
+              key={i}
+              className={`context-menu__item ${item.danger ? "context-menu__item--danger" : ""}`}
+              onClick={item.onClick}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

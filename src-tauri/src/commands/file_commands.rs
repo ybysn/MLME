@@ -329,3 +329,76 @@ pub fn export_html_to_pdf(html: String, output_path: String) -> Result<(), Strin
 
     Ok(())
 }
+
+/// 创建空 Markdown 文件。
+#[tauri::command]
+pub fn create_markdown_file(path: String) -> Result<(), String> {
+    let path_buf = Path::new(&path);
+    validate_markdown_extension(path_buf)?;
+    if path_buf.exists() {
+        return Err(format!("文件已存在: {}", path));
+    }
+    if let Some(parent) = path_buf.parent() {
+        if !parent.exists() {
+            return Err(format!("父目录不存在: {}", parent.display()));
+        }
+    }
+    fs::write(path_buf, b"").map_err(|e| format!("创建文件失败: {}", e))?;
+    Ok(())
+}
+
+/// 创建文件夹。
+#[tauri::command]
+pub fn create_folder(path: String) -> Result<(), String> {
+    let path_buf = Path::new(&path);
+    if path_buf.exists() {
+        return Err(format!("目录已存在: {}", path));
+    }
+    if let Some(parent) = path_buf.parent() {
+        if !parent.exists() {
+            return Err(format!("父目录不存在: {}", parent.display()));
+        }
+    }
+    fs::create_dir(path_buf).map_err(|e| format!("创建目录失败: {}", e))?;
+    Ok(())
+}
+
+/// 重命名文件或目录。
+#[tauri::command]
+pub fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
+    let old = Path::new(&old_path);
+    let new = Path::new(&new_path);
+    if !old.exists() {
+        return Err(format!("路径不存在: {}", old_path));
+    }
+    if new.exists() {
+        return Err(format!("目标路径已存在: {}", new_path));
+    }
+    if new_path.contains(".assets") {
+        return Err("不允许重命名到 .assets 目录".to_string());
+    }
+    fs::rename(old, new).map_err(|e| format!("重命名失败: {}", e))?;
+    Ok(())
+}
+
+/// 保护目录列表：禁止删除。
+const PROTECTED_DIRS: &[&str] = &[".git", "node_modules", "target", "dist", "build"];
+
+/// 删除文件或目录。
+#[tauri::command]
+pub fn delete_path(path: String) -> Result<(), String> {
+    let path_buf = Path::new(&path);
+    if !path_buf.exists() {
+        return Err(format!("路径不存在: {}", path));
+    }
+    let name = path_buf.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    if PROTECTED_DIRS.contains(&name) || name.ends_with(".assets") {
+        return Err(format!("不允许删除: {}", name));
+    }
+    if path_buf.is_dir() {
+        fs::remove_dir_all(path_buf).map_err(|e| format!("删除目录失败: {}", e))?;
+    } else {
+        fs::remove_file(path_buf).map_err(|e| format!("删除文件失败: {}", e))?;
+    }
+    Ok(())
+}

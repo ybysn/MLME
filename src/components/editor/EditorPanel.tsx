@@ -1,11 +1,30 @@
 /**
  * 模块职责：中间编辑区面板，使用 textarea 作为临时编辑区并显示底部状态栏。
- * 当前输入：文档内容、文件名、脏状态、编辑状态、标题数、内容变更回调。
- * 当前输出：空白提示或 textarea、底部状态栏（文件名/保存状态/字符/词数/行数/标题数）。
+ * 当前输入：文档内容、文件名、脏状态、编辑状态、标题数、内容变更回调、文件操作回调。
+ * 当前输出：工具栏 + textarea、底部状态栏。
  * 后续扩展点：替换 textarea 为 Milkdown 编辑器，接入编辑器文档模型。
  * 公开 ref：scrollToLine(line) 用于大纲跳转。
  */
-import { forwardRef, useRef, useImperativeHandle } from "react";
+import {
+  forwardRef,
+  useRef,
+  useEffect,
+  useImperativeHandle,
+  useCallback,
+} from "react";
+import {
+  toggleBold,
+  toggleItalic,
+  toggleInlineCode,
+  toggleBlockquote,
+  toggleUnorderedList,
+  toggleOrderedList,
+  insertCodeBlock,
+  insertLink,
+  insertImage,
+  setHeading,
+  type EditCommandResult,
+} from "../../editor/markdown/edit_commands";
 
 export interface EditorPanelProps {
   content: string;
@@ -14,18 +33,52 @@ export interface EditorPanelProps {
   isEditing: boolean;
   headingCount: number;
   onContentChange: (content: string) => void;
+  onSave: () => void;
+  onOpen: () => void;
+  onNew: () => void;
 }
 
 export interface EditorPanelHandle {
   scrollToLine: (line: number) => void;
 }
 
+interface PendingSelection {
+  start: number;
+  end: number;
+}
+
 export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
   function EditorPanel(
-    { content, fileName, isDirty, isEditing, headingCount, onContentChange },
+    {
+      content,
+      fileName,
+      isDirty,
+      isEditing,
+      headingCount,
+      onContentChange,
+      onSave,
+      onOpen,
+      onNew,
+    },
     ref,
   ) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const pendingSelectionRef = useRef<PendingSelection | null>(null);
+
+    // 内容变化后恢复光标位置
+    useEffect(() => {
+      const pending = pendingSelectionRef.current;
+      if (!pending) return;
+
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      const clampedStart = Math.min(pending.start, content.length);
+      const clampedEnd = Math.min(pending.end, content.length);
+      textarea.setSelectionRange(clampedStart, clampedEnd);
+      textarea.focus();
+      pendingSelectionRef.current = null;
+    }, [content]);
 
     useImperativeHandle(ref, () => ({
       scrollToLine(line: number) {
@@ -44,11 +97,67 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       },
     }));
 
+    // ── 编辑命令执行 ──────────────────────────
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    const applyCommand = useCallback(
+      (cmd: (content: string, start: number, end: number, ...args: any[]) => EditCommandResult, ...args: any[]) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const result = cmd(textarea.value, textarea.selectionStart, textarea.selectionEnd, ...args);
+        pendingSelectionRef.current = { start: result.selectionStart, end: result.selectionEnd };
+        onContentChange(result.content);
+      },
+      [onContentChange],
+    );
+
+    // ── 键盘快捷键 ────────────────────────────
+
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        const ctrl = e.ctrlKey || e.metaKey;
+        if (!ctrl) return;
+
+        switch (e.key.toLowerCase()) {
+          case "b":
+            e.preventDefault();
+            applyCommand(toggleBold);
+            break;
+          case "i":
+            e.preventDefault();
+            applyCommand(toggleItalic);
+            break;
+          case "e":
+            e.preventDefault();
+            applyCommand(toggleInlineCode);
+            break;
+          case "s":
+            e.preventDefault();
+            onSave();
+            break;
+          case "o":
+            e.preventDefault();
+            onOpen();
+            break;
+          case "n":
+            e.preventDefault();
+            onNew();
+            break;
+        }
+      },
+      [applyCommand, onSave, onOpen, onNew],
+    );
+
+    // ── 统计 ────────────────────────────────────
+
     const charCount = content.length;
     const lineCount = content ? content.split("\n").length : 0;
     const wordMatches =
       content.match(/[\u4e00-\u9fff\uff00-\uffef]|[a-zA-Z0-9]+/g) ?? [];
     const wordCount = wordMatches.length;
+
+    // ── 未编辑态 ────────────────────────────────
 
     if (!isEditing) {
       return (
@@ -72,14 +181,99 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       );
     }
 
+    // ── 编辑态 ──────────────────────────────────
+
     return (
       <div className="panel panel--editor">
+        <div className="editor-toolbar">
+          <button
+            className="editor-toolbar__btn"
+            title="一级标题 (H1)"
+            onClick={() => applyCommand(setHeading, 1)}
+          >
+            H1
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="二级标题 (H2)"
+            onClick={() => applyCommand(setHeading, 2)}
+          >
+            H2
+          </button>
+          <span className="editor-toolbar__sep" />
+          <button
+            className="editor-toolbar__btn"
+            title="加粗 (Ctrl+B)"
+            onClick={() => applyCommand(toggleBold)}
+          >
+            <strong>B</strong>
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="斜体 (Ctrl+I)"
+            onClick={() => applyCommand(toggleItalic)}
+          >
+            <em>I</em>
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="行内代码 (Ctrl+E)"
+            onClick={() => applyCommand(toggleInlineCode)}
+          >
+            {"</>"}
+          </button>
+          <span className="editor-toolbar__sep" />
+          <button
+            className="editor-toolbar__btn"
+            title="引用"
+            onClick={() => applyCommand(toggleBlockquote)}
+          >
+            &ldquo;
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="无序列表"
+            onClick={() => applyCommand(toggleUnorderedList)}
+          >
+            &bull;
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="有序列表"
+            onClick={() => applyCommand(toggleOrderedList)}
+          >
+            1.
+          </button>
+          <span className="editor-toolbar__sep" />
+          <button
+            className="editor-toolbar__btn"
+            title="代码块"
+            onClick={() => applyCommand(insertCodeBlock)}
+          >
+            {"{ }"}
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="链接"
+            onClick={() => applyCommand(insertLink)}
+          >
+            &#128279;
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="图片"
+            onClick={() => applyCommand(insertImage)}
+          >
+            &#128247;
+          </button>
+        </div>
         <div className="panel__body panel__body--editor-editing">
           <textarea
             ref={textareaRef}
             className="editor-textarea"
             value={content}
             onChange={(e) => onContentChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="在此输入 Markdown 内容..."
             spellCheck={false}
           />

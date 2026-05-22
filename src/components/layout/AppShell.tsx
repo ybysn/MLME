@@ -161,6 +161,9 @@ export function AppShell() {
           isEditing={doc.isEditing}
           headingCount={outlineResult.stats.headingCount}
           onContentChange={setContent}
+          onSave={handleSave}
+          onOpen={handleOpen}
+          onNew={handleNew}
         />
       </main>
     </div>

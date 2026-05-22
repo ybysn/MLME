@@ -76,6 +76,7 @@ export interface EditorPanelProps {
   onOpenSettings: () => void;
   onUpdateSettings: (partial: { editorFontSize?: number; editorFontFamily?: string }) => void;
   onExportHtml: () => void;
+  onExportPdf: () => void;
   onPrint: () => void;
 }
 
@@ -147,12 +148,27 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       defaultViewMode,
       onUpdateSettings,
       onExportHtml,
+      onExportPdf,
       onPrint,
     },
     ref,
   ) {
     const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const exportMenuRef = useRef<HTMLDivElement>(null);
+
+    // 点击外部关闭导出菜单
+    useEffect(() => {
+      if (!exportMenuOpen) return;
+      const handler = (e: MouseEvent) => {
+        if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+          setExportMenuOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }, [exportMenuOpen]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pendingSelectionRef = useRef<PendingSelection | null>(null);
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -653,16 +669,34 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           </div>
 
           <span className="editor-toolbar__sep" />
+          <div className="editor-export-menu" ref={exportMenuRef}>
+            <button
+              className="editor-toolbar__btn"
+              title="导出"
+              onClick={() => setExportMenuOpen((p) => !p)}
+            >
+              导出 &#9660;
+            </button>
+            {exportMenuOpen && (
+              <div className="editor-export-menu__dropdown">
+                <button
+                  className="editor-export-menu__item"
+                  onClick={() => { setExportMenuOpen(false); onExportHtml(); }}
+                >
+                  导出 HTML
+                </button>
+                <button
+                  className="editor-export-menu__item"
+                  onClick={() => { setExportMenuOpen(false); onExportPdf(); }}
+                >
+                  导出 PDF
+                </button>
+              </div>
+            )}
+          </div>
           <button
             className="editor-toolbar__btn"
-            title="导出 HTML"
-            onClick={onExportHtml}
-          >
-            导出
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="打印/PDF"
+            title="打印"
             onClick={onPrint}
           >
             打印

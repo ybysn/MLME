@@ -379,6 +379,42 @@ body {
   width: 64px;
 }
 
+/* 导出菜单 */
+.editor-export-menu {
+  position: relative;
+}
+
+.editor-export-menu__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 140px;
+  margin-top: 2px;
+  padding: 4px 0;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.editor-export-menu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-export-menu__item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
 .editor-toolbar__spacer {
   flex: 1;
 }

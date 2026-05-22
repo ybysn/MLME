@@ -457,6 +457,18 @@ export function AppShell() {
                   alert(`HTML 导出失败: ${err instanceof Error ? err.message : String(err)}`);
                 }
               }}
+              onExportPdf={async () => {
+                alert("PDF 导出将打开系统打印窗口，请选择'另存为 PDF'。");
+                try {
+                  await printMarkdownDocument({
+                    content: doc.content,
+                    currentPath: doc.currentPath,
+                    fileName: doc.fileName,
+                  });
+                } catch (err) {
+                  alert(`PDF 导出失败: ${err instanceof Error ? err.message : String(err)}`);
+                }
+              }}
               onPrint={async () => {
                 try {
                   await printMarkdownDocument({

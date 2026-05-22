@@ -1130,6 +1130,112 @@ body {
   background-color: #fef2f2;
 }
 
+/* ===== 通用弹窗 ===== */
+.app-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+.app-dialog {
+  width: 420px;
+  max-width: 90vw;
+  padding: var(--spacing-xl);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.app-dialog__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.app-dialog__message {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.55;
+}
+
+.app-dialog__input-wrap {
+  margin-bottom: var(--spacing-lg);
+}
+
+.app-dialog__input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  outline: none;
+}
+
+.app-dialog__input:focus {
+  border-color: var(--color-accent);
+}
+
+.app-dialog__input--error {
+  border-color: #dc2626;
+}
+
+.app-dialog__error {
+  margin-top: 6px;
+  font-size: var(--font-size-sm);
+  color: #dc2626;
+}
+
+.app-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.app-dialog__btn {
+  padding: 8px 20px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.app-dialog__btn:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.app-dialog__btn--primary {
+  color: #ffffff;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.app-dialog__btn--primary:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.app-dialog__btn--danger {
+  color: #ffffff;
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.app-dialog__btn--danger:hover {
+  background-color: #b91c1c;
+}
+
 .welcome-recent-list {
   list-style: none;
   margin: 0;

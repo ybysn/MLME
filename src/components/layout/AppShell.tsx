@@ -333,13 +333,7 @@ export function AppShell() {
     }
   }, [currentWorkspacePath]);
 
-  const handleCreateFile = useCallback(async (parentDir: string) => {
-    const name = window.prompt("输入文件名（自动添加 .md）:");
-    if (!name) return;
-    const sanitized = name.trim().replace(/[\\/:*?"<>|]/g, "");
-    if (!sanitized) { alert("文件名不能为空或包含非法字符"); return; }
-    const fileName = sanitized.endsWith(".md") ? sanitized : `${sanitized}.md`;
-    const fullPath = `${parentDir.replace(/[\\/]$/, "")}\\${fileName}`;
+  const handleCreateFile = useCallback(async (fullPath: string) => {
     try {
       await createMarkdownFile(fullPath);
       await refreshWorkspaceTree();
@@ -357,12 +351,7 @@ export function AppShell() {
     }
   }, [refreshWorkspaceTree, confirmBeforeLosingChanges, addToRecent]);
 
-  const handleCreateFolder = useCallback(async (parentDir: string) => {
-    const name = window.prompt("输入文件夹名:");
-    if (!name) return;
-    const sanitized = name.trim().replace(/[\\/:*?"<>|]/g, "");
-    if (!sanitized) { alert("文件夹名不能为空或包含非法字符"); return; }
-    const fullPath = `${parentDir.replace(/[\\/]$/, "")}\\${sanitized}`;
+  const handleCreateFolder = useCallback(async (fullPath: string) => {
     try {
       await createFolder(fullPath);
       await refreshWorkspaceTree();
@@ -371,20 +360,11 @@ export function AppShell() {
     }
   }, [refreshWorkspaceTree]);
 
-  const handleRenameItem = useCallback(async (oldPath: string, _isDir: boolean) => {
-    const oldName = oldPath.split(/[\\/]/).pop() ?? "";
-    const newName = window.prompt("输入新名称:", oldName);
-    if (!newName || newName === oldName) return;
-    const sanitized = newName.trim().replace(/[\\/:*?"<>|]/g, "");
-    if (!sanitized) { alert("名称不能为空或包含非法字符"); return; }
-
-    const parentDir = oldPath.replace(/[/\\][^/\\]*$/, "");
-    const newPath = `${parentDir}\\${sanitized}`;
-
+  const handleRenameItem = useCallback(async (oldPath: string, newPath: string) => {
     try {
       await renamePath(oldPath, newPath);
       if (doc.currentPath === oldPath) {
-        const name = newPath.split(/[\\/]/).pop() ?? sanitized;
+        const name = newPath.split(/[\\/]/).pop() ?? "";
         setDoc((prev) => ({ ...prev, currentPath: newPath, fileName: name }));
         setRecentFiles((prev) => updateRecentFilePath(prev, oldPath, newPath, name));
       }
@@ -395,10 +375,6 @@ export function AppShell() {
   }, [doc.currentPath, refreshWorkspaceTree]);
 
   const handleDeleteItem = useCallback(async (path: string, _isDir: boolean) => {
-    const type = _isDir ? "文件夹" : "文件";
-    const name = path.split(/[\\/]/).pop() ?? path;
-    if (!window.confirm(`确定删除${type} "${name}" 吗？此操作不可撤销。`)) return;
-
     if (path === doc.currentPath && doc.isDirty) {
       const action = async () => {
         try {

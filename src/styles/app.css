@@ -904,3 +904,61 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ===== 未保存变更确认弹窗 ===== */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.confirm-dialog {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--spacing-xl);
+  max-width: 380px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.confirm-dialog__message {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.6;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.confirm-dialog__btn {
+  padding: 6px 14px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-dialog__btn:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.confirm-dialog__btn--primary {
+  color: #ffffff;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.confirm-dialog__btn--primary:hover {
+  background-color: var(--color-accent-hover);
+}

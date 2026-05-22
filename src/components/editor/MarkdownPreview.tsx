@@ -2,6 +2,7 @@
  * 模块职责：Markdown 预览组件，异步加载本地图片为 data URL 后渲染。
  * 当前输入：content、currentPath、可选的 className、onKeyDown。
  * 当前输出：渲染后的 HTML，本地图片使用 data URL。
+ * 性能优化：debounce 渲染、全局 data URL 缓存、异步任务取消。
  */
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
@@ -22,6 +23,9 @@ export interface MarkdownPreviewProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
+/** 模块级 data URL 缓存，避免重复读取同一文件 */
+const globalDataUrlCache = new Map<string, string>();
+
 export function MarkdownPreview({
   content,
   currentPath,
@@ -29,93 +33,81 @@ export function MarkdownPreview({
   onKeyDown,
 }: MarkdownPreviewProps) {
   const [imageSrcMap, setImageSrcMap] = useState<Record<string, string>>({});
-  const cacheRef = useRef<Map<string, string>>(new Map());
   const versionRef = useRef(0);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // content / currentPath 变化时 debounce 后加载图片
   useEffect(() => {
-    console.debug("[IMAGE_DEBUG] MarkdownPreview props", {
-      currentPath: currentPath ?? null,
-      contentLength: content.length,
-    });
-
     if (!currentPath) {
       setImageSrcMap({});
       return;
     }
 
-    const sources = extractMarkdownImageSources(content);
-    console.debug("[IMAGE_DEBUG] extracted sources", sources);
+    // debounce 300ms
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
-    if (sources.length === 0) {
-      setImageSrcMap({});
-      return;
-    }
+    debounceTimerRef.current = setTimeout(() => {
+      let cancelled = false;
+      const version = ++versionRef.current;
+      const sources = extractMarkdownImageSources(content);
+      const nextMap: Record<string, string> = {};
 
-    let cancelled = false;
-    const version = ++versionRef.current;
-    const nextMap: Record<string, string> = {};
-
-    Promise.all(
-      sources.map(async (rawSrc) => {
-        const decodedSrc = safeDecodeMarkdownImageSrc(rawSrc);
-        const resolvedPath = resolveMarkdownAssetPath(currentPath, decodedSrc);
-
-        const cached = cacheRef.current.get(resolvedPath);
-        if (cached) {
-          console.debug("[IMAGE_DEBUG] cache hit", { rawSrc, decodedSrc, resolvedPath });
-          return { rawSrc, decodedSrc, dataUrl: cached };
-        }
-
-        try {
-          const dataUrl = await readImageAssetAsDataUrl(resolvedPath);
-          cacheRef.current.set(resolvedPath, dataUrl);
-          console.debug("[IMAGE_DEBUG] data url loaded", {
-            rawSrc,
-            decodedSrc,
-            resolvedPath,
-            dataUrlPrefix: dataUrl.slice(0, 50),
-            dataUrlLength: dataUrl.length,
-          });
-          return { rawSrc, decodedSrc, dataUrl };
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.error("[IMAGE_DEBUG] data URL load failed:", {
-            rawSrc,
-            decodedSrc,
-            resolvedPath,
-            error: msg,
-          });
-          return { rawSrc, decodedSrc, dataUrl: null };
-        }
-      }),
-    ).then((results) => {
-      if (cancelled || version !== versionRef.current) return;
-
-      for (const { rawSrc, decodedSrc, dataUrl } of results) {
-        if (!dataUrl) continue;
-
-        // 写入多个 key：兼容 markdown-it render 阶段可能的 encoded/decoded 形式
-        const keys = new Set([
-          rawSrc,
-          decodedSrc,
-          normalizeMarkdownImageSrc(rawSrc),
-          normalizeMarkdownImageSrc(decodedSrc),
-        ]);
-        for (const key of keys) {
-          if (key) nextMap[key] = dataUrl;
-        }
+      if (sources.length === 0) {
+        setImageSrcMap({});
+        return;
       }
 
-      console.debug("[IMAGE_DEBUG] imageSrcMap built", {
-        keyCount: Object.keys(nextMap).length,
-        keys: Object.keys(nextMap),
+      console.time("[PERF] preview image data url loading");
+
+      Promise.all(
+        sources.map(async (rawSrc) => {
+          if (cancelled || version !== versionRef.current) return null;
+
+          const decodedSrc = safeDecodeMarkdownImageSrc(rawSrc);
+          const resolvedPath = resolveMarkdownAssetPath(currentPath, decodedSrc);
+
+          // 优先查全局缓存
+          const cached = globalDataUrlCache.get(resolvedPath);
+          if (cached) {
+            return { rawSrc, decodedSrc, dataUrl: cached };
+          }
+
+          try {
+            const dataUrl = await readImageAssetAsDataUrl(resolvedPath);
+            globalDataUrlCache.set(resolvedPath, dataUrl);
+            return { rawSrc, decodedSrc, dataUrl };
+          } catch {
+            return null;
+          }
+        }),
+      ).then((results) => {
+        if (cancelled || version !== versionRef.current) return;
+
+        for (const r of results) {
+          if (!r?.dataUrl) continue;
+          const keys = new Set([
+            r.rawSrc,
+            r.decodedSrc,
+            normalizeMarkdownImageSrc(r.rawSrc),
+            normalizeMarkdownImageSrc(r.decodedSrc),
+          ]);
+          for (const key of keys) {
+            if (key) nextMap[key] = r.dataUrl;
+          }
+        }
+
+        console.timeEnd("[PERF] preview image data url loading");
+        setImageSrcMap(nextMap);
       });
 
-      setImageSrcMap(nextMap);
-    });
+      return () => {
+        cancelled = true;
+      };
+    }, 300);
 
     return () => {
-      cancelled = true;
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      versionRef.current++; // 加速旧任务被取消
     };
   }, [content, currentPath]);
 

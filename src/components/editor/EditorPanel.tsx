@@ -60,11 +60,16 @@ export interface EditorPanelProps {
   headingCount: number;
   /** 当前已保存文件的绝对路径；未保存时为 null */
   currentPath: string | null;
+  /** 自动保存是否开启 */
+  autoSaveEnabled: boolean;
+  /** 自动保存状态 */
+  autoSaveStatus: "idle" | "saving" | "error";
   onContentChange: (content: string) => void;
   onSave: () => void;
   onOpen: () => void;
   onNew: () => void;
   onToggleSidebar: () => void;
+  onToggleAutoSave: () => void;
 }
 
 export interface EditorPanelHandle {
@@ -91,11 +96,14 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       isEditing,
       headingCount,
       currentPath,
+      autoSaveEnabled,
+      autoSaveStatus,
       onContentChange,
       onSave,
       onOpen,
       onNew,
       onToggleSidebar,
+      onToggleAutoSave,
     },
     ref,
   ) {
@@ -127,6 +135,29 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       textarea.focus();
       pendingSelectionRef.current = null;
     }, [content]);
+
+    // 打开文件/新建文档后自动聚焦 textarea
+    useEffect(() => {
+      if (!isEditing) return;
+      if (viewMode === "preview") return;
+
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      // requestAnimationFrame 确保 DOM 更新完成
+      const raf = requestAnimationFrame(() => {
+        textarea.focus();
+        console.timeEnd("[PERF] open file to editable");
+      });
+      return () => cancelAnimationFrame(raf);
+    }, [fileName, currentPath, isEditing, viewMode]);
+
+    // 记录文件打开性能
+    useEffect(() => {
+      if (isEditing) {
+        console.time("[PERF] open file to editable");
+      }
+    }, [isEditing, fileName]);
 
     // 清理状态定时器
     useEffect(() => {
@@ -545,8 +576,23 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
         <footer className="status-bar">
           <span className="status-bar__item" title={fileName}>{fileName}</span>
-          <span className="status-bar__item">{isDirty ? "未保存" : "已保存"}</span>
+          <span className="status-bar__item">
+            {autoSaveStatus === "saving"
+              ? "自动保存中..."
+              : autoSaveStatus === "error"
+                ? "自动保存失败"
+                : isDirty
+                  ? "未保存"
+                  : "已保存"}
+          </span>
           <span className="status-bar__item status-bar__spacer" />
+          <button
+            className="editor-toolbar__mode-btn"
+            title={autoSaveEnabled ? "自动保存: 开" : "自动保存: 关"}
+            onClick={onToggleAutoSave}
+          >
+            {autoSaveEnabled ? "自动保存: 开" : "自动保存: 关"}
+          </button>
           <span className="status-bar__item">字数 {charCount}</span>
           <span className="status-bar__item">词数 {wordCount}</span>
           <span className="status-bar__item">行 {lineCount}</span>

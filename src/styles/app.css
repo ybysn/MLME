@@ -139,6 +139,65 @@ body {
 }
 
 /* ===== 文件树面板 ===== */
+.file-tree-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.file-tree-actions__btn {
+  flex: 1 1 calc(50% - var(--spacing-xs));
+  min-width: 0;
+  padding: 6px var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.file-tree-actions__btn:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-accent);
+}
+
+.file-tree-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+}
+
+.file-tree-file-info__name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tree-file-info__status {
+  font-size: var(--font-size-xs);
+}
+
+.file-tree-file-info__status--dirty {
+  color: #d97706;
+}
+
+.file-tree-file-info__status--clean {
+  color: var(--color-text-muted);
+}
+
 .file-tree-section {
   margin-bottom: var(--spacing-lg);
 }
@@ -186,6 +245,33 @@ body {
 
 .editor-empty-state__hint {
   font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.panel__body--editor-editing {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 0;
+}
+
+.editor-textarea {
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-xl);
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas",
+    "Courier New", monospace;
+  font-size: var(--font-size-lg);
+  line-height: 1.7;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+}
+
+.editor-textarea::placeholder {
   color: var(--color-text-muted);
 }
 

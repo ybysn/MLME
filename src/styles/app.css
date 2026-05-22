@@ -1,0 +1,244 @@
+/**
+ * 模块职责：全局样式，定义 CSS 变量、三栏布局、面板和状态栏样式。
+ * 当前范围：基础重置、布局、面板组件外观。
+ * 后续扩展点：主题变量切换（明亮/暗黑）、编辑器内联样式、响应式调整。
+ */
+
+/* ===== 全局重置 ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* 基础色调 - 浅色主题 */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f5f6f8;
+  --color-bg-tertiary: #ebeef2;
+  --color-border: #e0e3e8;
+  --color-border-light: #eef0f3;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #5a5f6e;
+  --color-text-muted: #9a9fb0;
+  --color-accent: #4a7cf7;
+  --color-accent-hover: #3a6ae6;
+  --color-status-bar-bg: #f0f2f5;
+  --color-status-bar-text: #7a7f8e;
+
+  /* 布局尺寸 */
+  --sidebar-left-width: 260px;
+  --sidebar-right-width: 280px;
+  --status-bar-height: 28px;
+
+  /* 字体 */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== 主布局 ===== */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.app-shell__sidebar {
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  border-right: 1px solid var(--color-border);
+}
+
+.app-shell__sidebar--left {
+  width: var(--sidebar-left-width);
+  background-color: var(--color-bg-secondary);
+}
+
+.app-shell__sidebar--right {
+  width: var(--sidebar-right-width);
+  border-right: none;
+  border-left: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+}
+
+.app-shell__main {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+/* ===== 面板通用 ===== */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel__header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.panel__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+.panel__body--editor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* ===== 文件树面板 ===== */
+.file-tree-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.file-tree-section__title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-sm);
+  padding: 0 var(--spacing-xs);
+}
+
+.file-tree-section__placeholder {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  padding: var(--spacing-md);
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* ===== 编辑器面板 ===== */
+.editor-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.editor-empty-state__icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.4;
+}
+
+.editor-empty-state__text {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.editor-empty-state__hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* ===== 状态栏 ===== */
+.status-bar {
+  display: flex;
+  align-items: center;
+  height: var(--status-bar-height);
+  padding: 0 var(--spacing-md);
+  background-color: var(--color-status-bar-bg);
+  border-top: 1px solid var(--color-border-light);
+  font-size: var(--font-size-xs);
+  color: var(--color-status-bar-text);
+  flex-shrink: 0;
+}
+
+.status-bar__item {
+  padding: 0 var(--spacing-sm);
+}
+
+.status-bar__spacer {
+  flex: 1;
+}
+
+/* ===== 大纲面板 ===== */
+.outline-placeholder {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+}
+
+.outline-stats {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.outline-stats__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+  font-size: var(--font-size-xs);
+}
+
+.outline-stats__label {
+  color: var(--color-text-muted);
+}
+
+.outline-stats__value {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}

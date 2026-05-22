@@ -350,6 +350,16 @@ body {
   color: #ffffff;
 }
 
+/* 状态消息条 */
+.editor-status-msg {
+  padding: 4px var(--spacing-md);
+  font-size: var(--font-size-xs);
+  color: #92400e;
+  background-color: #fef3c7;
+  border-bottom: 1px solid #fde68a;
+  flex-shrink: 0;
+}
+
 .editor-empty-state {
   display: flex;
   flex-direction: column;
@@ -401,6 +411,12 @@ body {
 
 .editor-textarea::placeholder {
   color: var(--color-text-muted);
+}
+
+.editor-textarea--drag-over {
+  background-color: #eef3ff;
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
 }
 
 /* ===== 分屏布局 ===== */
@@ -539,8 +555,10 @@ body {
 }
 
 .markdown-preview img {
+  display: block;
   max-width: 100%;
   height: auto;
+  margin: 12px 0;
 }
 
 .markdown-preview hr {

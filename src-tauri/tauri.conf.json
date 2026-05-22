@@ -12,13 +12,18 @@
   "app": {
     "windows": [
       {
-        "title": "markdown-editor",
-        "width": 800,
-        "height": 600
+        "title": "Shadow Markdown Editor",
+        "width": 1200,
+        "height": 800,
+        "dragDropEnabled": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["**"]
+      }
     }
   },
   "bundle": {

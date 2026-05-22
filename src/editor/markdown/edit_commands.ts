@@ -290,6 +290,11 @@ export function insertLink(content: string, start: number, end: number): EditCom
   };
 }
 
+/**
+ * 插入图片占位语法（纯文本兜底方案，仅用于缺少资产系统的降级场景）。
+ * 实际图片插入应走 asset_service → saveImageAsset 流程，
+ * 确保图片被复制到 .assets 目录并以相对路径引用。
+ */
 export function insertImage(content: string, start: number, end: number): EditCommandResult {
   if (start === end) {
     const placeholder = "![alt text](url)";

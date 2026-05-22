@@ -22,13 +22,35 @@ import {
   toggleOrderedList,
   insertCodeBlock,
   insertLink,
-  insertImage,
   setHeading,
   type EditCommandResult,
 } from "../../editor/markdown/edit_commands";
 import { MarkdownPreview } from "./MarkdownPreview";
+import { saveImageAsset } from "../../services/asset_service";
 
 export type ViewMode = "edit" | "preview" | "split";
+
+/** 允许的图片 MIME 类型 */
+const IMAGE_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "image/bmp",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
+  "image/avif",
+]);
+
+/** MIME 类型回退——根据扩展名判断 */
+const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"]);
+
+function isImageFile(file: File): boolean {
+  if (file.type && IMAGE_MIME_TYPES.has(file.type)) return true;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return IMAGE_EXTS.has(ext);
+}
 
 export interface EditorPanelProps {
   content: string;
@@ -36,6 +58,8 @@ export interface EditorPanelProps {
   isDirty: boolean;
   isEditing: boolean;
   headingCount: number;
+  /** 当前已保存文件的绝对路径；未保存时为 null */
+  currentPath: string | null;
   onContentChange: (content: string) => void;
   onSave: () => void;
   onOpen: () => void;
@@ -66,6 +90,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       isDirty,
       isEditing,
       headingCount,
+      currentPath,
       onContentChange,
       onSave,
       onOpen,
@@ -76,7 +101,17 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
   ) {
     const [viewMode, setViewMode] = useState<ViewMode>("edit");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const pendingSelectionRef = useRef<PendingSelection | null>(null);
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
+    const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    /** 显示即时状态消息，3 秒后自动消失 */
+    const showStatus = useCallback((message: string) => {
+      setStatusMessage(message);
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+      statusTimerRef.current = setTimeout(() => setStatusMessage(null), 3000);
+    }, []);
 
     // 内容变化后恢复光标位置
     useEffect(() => {
@@ -92,6 +127,13 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       textarea.focus();
       pendingSelectionRef.current = null;
     }, [content]);
+
+    // 清理状态定时器
+    useEffect(() => {
+      return () => {
+        if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+      };
+    }, []);
 
     useImperativeHandle(ref, () => ({
       scrollToLine(line: number) {
@@ -122,6 +164,124 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         onContentChange(result.content);
       },
       [onContentChange],
+    );
+
+    // ── 统一图片插入流程 ──────────────────────
+
+    /**
+     * 统一处理图片文件插入：支持工具栏按钮选择 & 拖拽。
+     * @param files 用户选择或拖入的 File 列表
+     */
+    const handleInsertImageFiles = useCallback(
+      async (files: File[]) => {
+        const imageFiles = files.filter(isImageFile);
+        if (imageFiles.length === 0) {
+          showStatus("仅支持图片文件 (png, jpg, jpeg, gif, webp, svg)");
+          return;
+        }
+
+        if (!currentPath) {
+          showStatus("请先保存 Markdown 文件，再插入图片");
+          return;
+        }
+
+        const textarea = textareaRef.current;
+        const cursorPos = textarea?.selectionStart ?? content.length;
+
+        let newContent = content;
+        // 如果光标不在行首，先插入换行
+        if (cursorPos > 0 && content[cursorPos - 1] !== "\n") {
+          newContent =
+            newContent.slice(0, cursorPos) + "\n" + newContent.slice(cursorPos);
+        }
+
+        let offset = cursorPos > 0 && content[cursorPos - 1] !== "\n" ? 1 : 0;
+        let errorCount = 0;
+        let successCount = 0;
+
+        for (const file of imageFiles) {
+          try {
+            const payload = await saveImageAsset(currentPath, file);
+            const mdImage = `![${payload.file_name}](${payload.relative_path})\n`;
+            const insertPos = cursorPos + offset;
+            newContent =
+              newContent.slice(0, insertPos) +
+              mdImage +
+              newContent.slice(insertPos);
+            offset += mdImage.length;
+            successCount++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            errorCount++;
+            showStatus(`图片保存失败: ${msg}`);
+          }
+        }
+
+        if (successCount > 0) {
+          pendingSelectionRef.current = {
+            start: cursorPos + offset,
+            end: cursorPos + offset,
+          };
+          onContentChange(newContent);
+          if (successCount === 1) {
+            showStatus(`已插入 1 张图片`);
+          } else {
+            showStatus(`已插入 ${successCount} 张图片`);
+          }
+        }
+      },
+      [content, currentPath, onContentChange, showStatus],
+    );
+
+    // ── 工具栏图片按钮：触发隐藏 input ──────────
+
+    const handleImageButtonClick = useCallback(() => {
+      fileInputRef.current?.click();
+    }, []);
+
+    const handleFileInputChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+          handleInsertImageFiles(Array.from(files));
+        }
+        // 清空 input 使重复选择同一文件也能触发 change
+        e.target.value = "";
+      },
+      [handleInsertImageFiles],
+    );
+
+    // ── 图片拖拽 ────────────────────────────────
+
+    const [isDragOver, setIsDragOver] = useState(false);
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+      if (!e.dataTransfer.types.includes("Files")) return;
+
+      const hasImageFile = Array.from(e.dataTransfer.files).some(isImageFile);
+      if (!hasImageFile) return;
+
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      setIsDragOver(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+      setIsDragOver(false);
+    }, []);
+
+    const handleDrop = useCallback(
+      async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+
+        const files = e.dataTransfer.files;
+        if (files.length === 0) return;
+
+        await handleInsertImageFiles(Array.from(files));
+      },
+      [handleInsertImageFiles],
     );
 
     // ── 键盘快捷键 ────────────────────────────
@@ -164,6 +324,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       },
       [applyCommand, onSave, onOpen, onNew, onToggleSidebar],
     );
+
     const handlePreviewKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         const ctrl = e.ctrlKey || e.metaKey;
@@ -227,10 +388,16 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     const textareaElement = (
       <textarea
         ref={textareaRef}
-        className={viewMode === "split" ? "editor-textarea editor-textarea--split" : "editor-textarea"}
+        className={
+          (viewMode === "split" ? "editor-textarea editor-textarea--split" : "editor-textarea") +
+          (isDragOver ? " editor-textarea--drag-over" : "")
+        }
         value={content}
         onChange={(e) => onContentChange(e.target.value)}
         onKeyDown={handleEditKeyDown}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         placeholder="在此输入 Markdown 内容..."
         spellCheck={false}
       />
@@ -240,6 +407,16 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
     return (
       <div className="panel panel--editor">
+        {/* 隐藏文件选择器，由图片按钮触发 */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,image/bmp,image/x-icon,image/avif"
+          multiple
+          style={{ display: "none" }}
+          onChange={handleFileInputChange}
+        />
+
         <div className="editor-toolbar">
           <button
             className="editor-toolbar__btn"
@@ -249,7 +426,6 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
             &#9776;
           </button>
           <span className="editor-toolbar__sep" />
-          {/* 编辑命令按钮 */}
           <button className="editor-toolbar__btn" title="一级标题 (H1)" onClick={() => applyCommand(setHeading, 1)}>H1</button>
           <button className="editor-toolbar__btn" title="二级标题 (H2)" onClick={() => applyCommand(setHeading, 2)}>H2</button>
           <span className="editor-toolbar__sep" />
@@ -263,7 +439,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           <span className="editor-toolbar__sep" />
           <button className="editor-toolbar__btn" title="代码块" onClick={() => applyCommand(insertCodeBlock)}>{"{ }"}</button>
           <button className="editor-toolbar__btn" title="链接" onClick={() => applyCommand(insertLink)}>&#128279;</button>
-          <button className="editor-toolbar__btn" title="图片" onClick={() => applyCommand(insertImage)}>&#128247;</button>
+          <button className="editor-toolbar__btn" title="插入图片" onClick={handleImageButtonClick}>&#128247;</button>
 
           <span className="editor-toolbar__spacer" />
 
@@ -282,29 +458,49 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           </div>
         </div>
 
+        {/* 状态消息 */}
+        {statusMessage && (
+          <div className="editor-status-msg">{statusMessage}</div>
+        )}
+
         {/* 编辑模式 */}
         {viewMode === "edit" && (
-          <div className="panel__body panel__body--editor-editing">
+          <div
+            className="panel__body panel__body--editor-editing"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             {textareaElement}
           </div>
         )}
 
         {/* 预览模式 */}
         {viewMode === "preview" && (
-          <div className="panel__body panel__body--editor-editing">
-            <MarkdownPreview content={content} onKeyDown={handlePreviewKeyDown} />
+          <div
+            className="panel__body panel__body--editor-editing"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <MarkdownPreview content={content} currentPath={currentPath} onKeyDown={handlePreviewKeyDown} />
           </div>
         )}
 
         {/* 分屏模式 */}
         {viewMode === "split" && (
-          <div className="panel__body panel__body--editor-split">
+          <div
+            className="panel__body panel__body--editor-split"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <div className="editor-split__pane editor-split__pane--edit">
               {textareaElement}
             </div>
             <div className="editor-split__divider" />
             <div className="editor-split__pane editor-split__pane--preview">
-              <MarkdownPreview content={content} />
+              <MarkdownPreview content={content} currentPath={currentPath} />
             </div>
           </div>
         )}

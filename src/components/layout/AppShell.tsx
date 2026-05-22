@@ -26,6 +26,14 @@ import {
   type MarkdownOutlineItem,
 } from "../../editor/markdown/parse_outline";
 
+/** 从对话框返回值中提取路径字符串；兼容 string 和 { path } 两种格式 */
+function extractDialogPath(result: string | { path: string } | null): string | null {
+  if (!result) return null;
+  if (typeof result === "string") return result;
+  if (typeof result === "object" && "path" in result) return result.path;
+  return null;
+}
+
 export function AppShell() {
   const [doc, setDoc] = useState<DocumentState>(createEmptyDocument);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
@@ -90,12 +98,13 @@ export function AppShell() {
   const handleSave = useCallback(async () => {
     let targetPath = doc.currentPath;
     if (!targetPath) {
-      const savePath = await save({
+      const raw = await save({
         filters: [{ name: "Markdown", extensions: ["md"] }],
         defaultPath: doc.fileName.endsWith(".md")
           ? doc.fileName
           : `${doc.fileName}.md`,
       });
+      const savePath = extractDialogPath(raw);
       if (!savePath) return;
       targetPath = savePath;
     }
@@ -118,12 +127,13 @@ export function AppShell() {
 
   const handleSaveAs = useCallback(async () => {
     try {
-      const savePath = await save({
+      const raw = await save({
         filters: [{ name: "Markdown", extensions: ["md"] }],
         defaultPath: doc.fileName.endsWith(".md")
           ? doc.fileName
           : `${doc.fileName}.md`,
       });
+      const savePath = extractDialogPath(raw);
       if (!savePath) return;
 
       await writeMarkdownFile(savePath, doc.content);
@@ -179,6 +189,7 @@ export function AppShell() {
           isDirty={doc.isDirty}
           isEditing={doc.isEditing}
           headingCount={outlineResult.stats.headingCount}
+          currentPath={doc.currentPath}
           onContentChange={setContent}
           onSave={handleSave}
           onOpen={handleOpen}

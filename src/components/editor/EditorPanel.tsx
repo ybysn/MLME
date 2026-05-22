@@ -1,13 +1,14 @@
 /**
  * 模块职责：中间编辑区面板，使用 textarea 作为临时编辑区并显示底部状态栏。
  * 当前输入：文档内容、文件名、脏状态、编辑状态、标题数、内容变更回调、文件操作回调。
- * 当前输出：工具栏 + textarea、底部状态栏。
+ * 当前输出：工具栏（含视图模式切换）+ textarea/MarkdownPreview/分屏、底部状态栏。
  * 后续扩展点：替换 textarea 为 Milkdown 编辑器，接入编辑器文档模型。
  * 公开 ref：scrollToLine(line) 用于大纲跳转。
  */
 import {
   forwardRef,
   useRef,
+  useState,
   useEffect,
   useImperativeHandle,
   useCallback,
@@ -25,6 +26,9 @@ import {
   setHeading,
   type EditCommandResult,
 } from "../../editor/markdown/edit_commands";
+import { MarkdownPreview } from "./MarkdownPreview";
+
+export type ViewMode = "edit" | "preview" | "split";
 
 export interface EditorPanelProps {
   content: string;
@@ -47,6 +51,12 @@ interface PendingSelection {
   end: number;
 }
 
+const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "edit", label: "编辑" },
+  { value: "preview", label: "预览" },
+  { value: "split", label: "分屏" },
+];
+
 export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
   function EditorPanel(
     {
@@ -62,6 +72,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     },
     ref,
   ) {
+    const [viewMode, setViewMode] = useState<ViewMode>("edit");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const pendingSelectionRef = useRef<PendingSelection | null>(null);
 
@@ -99,7 +110,6 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
     // ── 编辑命令执行 ──────────────────────────
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     const applyCommand = useCallback(
       (cmd: (content: string, start: number, end: number, ...args: any[]) => EditCommandResult, ...args: any[]) => {
         const textarea = textareaRef.current;
@@ -114,7 +124,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
     // ── 键盘快捷键 ────────────────────────────
 
-    const handleKeyDown = useCallback(
+    const handleEditKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const ctrl = e.ctrlKey || e.metaKey;
         if (!ctrl) return;
@@ -149,6 +159,30 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       [applyCommand, onSave, onOpen, onNew],
     );
 
+    // 预览模式下保留文件操作快捷键
+    const handlePreviewKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        const ctrl = e.ctrlKey || e.metaKey;
+        if (!ctrl) return;
+
+        switch (e.key.toLowerCase()) {
+          case "s":
+            e.preventDefault();
+            onSave();
+            break;
+          case "o":
+            e.preventDefault();
+            onOpen();
+            break;
+          case "n":
+            e.preventDefault();
+            onNew();
+            break;
+        }
+      },
+      [onSave, onOpen, onNew],
+    );
+
     // ── 统计 ────────────────────────────────────
 
     const charCount = content.length;
@@ -181,110 +215,87 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       );
     }
 
+    // 文本编辑区组件
+    const textareaElement = (
+      <textarea
+        ref={textareaRef}
+        className={viewMode === "split" ? "editor-textarea editor-textarea--split" : "editor-textarea"}
+        value={content}
+        onChange={(e) => onContentChange(e.target.value)}
+        onKeyDown={handleEditKeyDown}
+        placeholder="在此输入 Markdown 内容..."
+        spellCheck={false}
+      />
+    );
+
     // ── 编辑态 ──────────────────────────────────
 
     return (
       <div className="panel panel--editor">
         <div className="editor-toolbar">
-          <button
-            className="editor-toolbar__btn"
-            title="一级标题 (H1)"
-            onClick={() => applyCommand(setHeading, 1)}
-          >
-            H1
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="二级标题 (H2)"
-            onClick={() => applyCommand(setHeading, 2)}
-          >
-            H2
-          </button>
+          {/* 编辑命令按钮 */}
+          <button className="editor-toolbar__btn" title="一级标题 (H1)" onClick={() => applyCommand(setHeading, 1)}>H1</button>
+          <button className="editor-toolbar__btn" title="二级标题 (H2)" onClick={() => applyCommand(setHeading, 2)}>H2</button>
           <span className="editor-toolbar__sep" />
-          <button
-            className="editor-toolbar__btn"
-            title="加粗 (Ctrl+B)"
-            onClick={() => applyCommand(toggleBold)}
-          >
-            <strong>B</strong>
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="斜体 (Ctrl+I)"
-            onClick={() => applyCommand(toggleItalic)}
-          >
-            <em>I</em>
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="行内代码 (Ctrl+E)"
-            onClick={() => applyCommand(toggleInlineCode)}
-          >
-            {"</>"}
-          </button>
+          <button className="editor-toolbar__btn" title="加粗 (Ctrl+B)" onClick={() => applyCommand(toggleBold)}><strong>B</strong></button>
+          <button className="editor-toolbar__btn" title="斜体 (Ctrl+I)" onClick={() => applyCommand(toggleItalic)}><em>I</em></button>
+          <button className="editor-toolbar__btn" title="行内代码 (Ctrl+E)" onClick={() => applyCommand(toggleInlineCode)}>{"</>"}</button>
           <span className="editor-toolbar__sep" />
-          <button
-            className="editor-toolbar__btn"
-            title="引用"
-            onClick={() => applyCommand(toggleBlockquote)}
-          >
-            &ldquo;
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="无序列表"
-            onClick={() => applyCommand(toggleUnorderedList)}
-          >
-            &bull;
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="有序列表"
-            onClick={() => applyCommand(toggleOrderedList)}
-          >
-            1.
-          </button>
+          <button className="editor-toolbar__btn" title="引用" onClick={() => applyCommand(toggleBlockquote)}>&ldquo;</button>
+          <button className="editor-toolbar__btn" title="无序列表" onClick={() => applyCommand(toggleUnorderedList)}>&bull;</button>
+          <button className="editor-toolbar__btn" title="有序列表" onClick={() => applyCommand(toggleOrderedList)}>1.</button>
           <span className="editor-toolbar__sep" />
-          <button
-            className="editor-toolbar__btn"
-            title="代码块"
-            onClick={() => applyCommand(insertCodeBlock)}
-          >
-            {"{ }"}
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="链接"
-            onClick={() => applyCommand(insertLink)}
-          >
-            &#128279;
-          </button>
-          <button
-            className="editor-toolbar__btn"
-            title="图片"
-            onClick={() => applyCommand(insertImage)}
-          >
-            &#128247;
-          </button>
+          <button className="editor-toolbar__btn" title="代码块" onClick={() => applyCommand(insertCodeBlock)}>{"{ }"}</button>
+          <button className="editor-toolbar__btn" title="链接" onClick={() => applyCommand(insertLink)}>&#128279;</button>
+          <button className="editor-toolbar__btn" title="图片" onClick={() => applyCommand(insertImage)}>&#128247;</button>
+
+          <span className="editor-toolbar__spacer" />
+
+          {/* 视图模式切换 */}
+          <span className="editor-toolbar__sep" />
+          <div className="editor-toolbar__modes">
+            {VIEW_MODE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                className={`editor-toolbar__mode-btn ${viewMode === opt.value ? "editor-toolbar__mode-btn--active" : ""}`}
+                onClick={() => setViewMode(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="panel__body panel__body--editor-editing">
-          <textarea
-            ref={textareaRef}
-            className="editor-textarea"
-            value={content}
-            onChange={(e) => onContentChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="在此输入 Markdown 内容..."
-            spellCheck={false}
-          />
-        </div>
+
+        {/* 编辑模式 */}
+        {viewMode === "edit" && (
+          <div className="panel__body panel__body--editor-editing">
+            {textareaElement}
+          </div>
+        )}
+
+        {/* 预览模式 */}
+        {viewMode === "preview" && (
+          <div className="panel__body panel__body--editor-editing">
+            <MarkdownPreview content={content} onKeyDown={handlePreviewKeyDown} />
+          </div>
+        )}
+
+        {/* 分屏模式 */}
+        {viewMode === "split" && (
+          <div className="panel__body panel__body--editor-split">
+            <div className="editor-split__pane editor-split__pane--edit">
+              {textareaElement}
+            </div>
+            <div className="editor-split__divider" />
+            <div className="editor-split__pane editor-split__pane--preview">
+              <MarkdownPreview content={content} />
+            </div>
+          </div>
+        )}
+
         <footer className="status-bar">
-          <span className="status-bar__item" title={fileName}>
-            {fileName}
-          </span>
-          <span className="status-bar__item">
-            {isDirty ? "未保存" : "已保存"}
-          </span>
+          <span className="status-bar__item" title={fileName}>{fileName}</span>
+          <span className="status-bar__item">{isDirty ? "未保存" : "已保存"}</span>
           <span className="status-bar__item status-bar__spacer" />
           <span className="status-bar__item">字数 {charCount}</span>
           <span className="status-bar__item">词数 {wordCount}</span>

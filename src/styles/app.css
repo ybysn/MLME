@@ -301,6 +301,50 @@ body {
   margin: 0 var(--spacing-xs);
 }
 
+.editor-toolbar__spacer {
+  flex: 1;
+}
+
+.editor-toolbar__modes {
+  display: flex;
+  gap: 1px;
+}
+
+.editor-toolbar__mode-btn {
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-muted);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.editor-toolbar__mode-btn:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.editor-toolbar__mode-btn:last-child {
+  border-radius: 0 3px 3px 0;
+}
+
+.editor-toolbar__mode-btn:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.editor-toolbar__mode-btn--active {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.editor-toolbar__mode-btn--active:hover {
+  background-color: var(--color-accent-hover);
+  color: #ffffff;
+}
+
 .editor-empty-state {
   display: flex;
   flex-direction: column;
@@ -352,6 +396,160 @@ body {
 
 .editor-textarea::placeholder {
   color: var(--color-text-muted);
+}
+
+/* ===== 分屏布局 ===== */
+.panel__body--editor-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 0;
+}
+
+.editor-split__pane {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+.editor-split__divider {
+  width: 1px;
+  flex-shrink: 0;
+  background-color: var(--color-border);
+}
+
+/* ===== Markdown 预览 ===== */
+.markdown-preview {
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  font-family: var(--font-family);
+  font-size: var(--font-size-lg);
+  line-height: 1.7;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  outline: none;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.markdown-preview h1 { font-size: 1.6em; border-bottom: 1px solid var(--color-border-light); padding-bottom: 0.3em; }
+.markdown-preview h2 { font-size: 1.35em; border-bottom: 1px solid var(--color-border-light); padding-bottom: 0.25em; }
+.markdown-preview h3 { font-size: 1.15em; }
+.markdown-preview h4 { font-size: 1.05em; }
+.markdown-preview h5 { font-size: 1em; }
+.markdown-preview h6 { font-size: 0.9em; color: var(--color-text-secondary); }
+
+.markdown-preview p {
+  margin-bottom: 0.75em;
+}
+
+.markdown-preview blockquote {
+  margin: 0.5em 0;
+  padding: 0.5em 1em;
+  border-left: 3px solid var(--color-accent);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-secondary);
+  border-radius: 0 4px 4px 0;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+
+.markdown-preview li {
+  margin-bottom: 0.25em;
+}
+
+.markdown-preview code {
+  padding: 0.15em 0.4em;
+  font-size: 0.9em;
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
+  background-color: var(--color-bg-tertiary);
+  border-radius: 3px;
+  color: var(--color-text);
+}
+
+.markdown-preview pre {
+  margin: 0.75em 0;
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.markdown-preview pre code {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.markdown-preview table {
+  width: 100%;
+  margin: 0.75em 0;
+  border-collapse: collapse;
+  font-size: var(--font-size-base);
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.markdown-preview th {
+  background-color: var(--color-bg-secondary);
+  font-weight: 600;
+}
+
+.markdown-preview tr:nth-child(even) {
+  background-color: var(--color-bg-secondary);
+}
+
+.markdown-preview a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-preview hr {
+  margin: 1em 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.markdown-preview strong {
+  font-weight: 600;
+}
+
+.markdown-preview em {
+  font-style: italic;
 }
 
 /* ===== 状态栏 ===== */

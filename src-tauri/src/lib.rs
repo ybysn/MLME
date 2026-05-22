@@ -15,6 +15,7 @@ pub fn run() {
             file_commands::write_markdown_file,
             file_commands::file_exists,
             asset_commands::save_image_asset,
+            asset_commands::read_image_asset_as_data_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -30,3 +30,12 @@ export async function saveImageAsset(
     bytes,
   });
 }
+
+/**
+ * 读取本地图片文件为 data URL（绕过 assetProtocol 中文路径问题）。
+ * @param path 图片文件的绝对路径
+ * @returns data:image/xxx;base64,... 格式的字符串
+ */
+export async function readImageAssetAsDataUrl(path: string): Promise<string> {
+  return invoke<string>("read_image_asset_as_data_url", { path });
+}

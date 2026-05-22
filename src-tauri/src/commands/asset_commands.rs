@@ -10,9 +10,10 @@
 
 use serde::Serialize;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+use base64::Engine;
 
 /// 图片资产保存后返回的负载结构。
 #[derive(Serialize, Clone)]
@@ -176,4 +177,68 @@ pub fn save_image_asset(
         relative_path,
         file_name,
     })
+}
+
+/// 根据文件扩展名获取 MIME 类型。
+fn extension_to_mime(ext: &str) -> &str {
+    match ext.to_lowercase().as_str() {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        "bmp" => "image/bmp",
+        "ico" => "image/x-icon",
+        "avif" => "image/avif",
+        _ => "application/octet-stream",
+    }
+}
+
+/// 读取本地图片文件并返回 data URL（绕过 assetProtocol 中文路径问题）。
+/// 适用于在 WebView 预览中直接渲染本地图片，不依赖 asset.localhost。
+#[tauri::command]
+pub fn read_image_asset_as_data_url(path: String) -> Result<String, String> {
+    let path_buf = Path::new(&path);
+
+    println!("[asset_commands] read_image_asset_as_data_url path={}", path);
+    println!("[asset_commands] exists={}", path_buf.exists());
+
+    // 校验文件存在
+    if !path_buf.exists() {
+        return Err(format!("图片文件不存在: {}", path));
+    }
+
+    // 校验扩展名
+    let ext = match path_buf.extension().and_then(|e| e.to_str()) {
+        Some(e) => {
+            let lower = e.to_lowercase();
+            println!("[asset_commands] ext={}", lower);
+            if IMAGE_EXTENSIONS.contains(&lower.as_str()) {
+                lower
+            } else {
+                return Err(format!("不支持的图片格式: .{}", e));
+            }
+        }
+        None => return Err("文件没有扩展名".to_string()),
+    };
+
+    // 读取文件内容
+    let mut file = fs::File::open(path_buf)
+        .map_err(|e| format!("打开图片文件失败: {}", e))?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)
+        .map_err(|e| format!("读取图片数据失败: {}", e))?;
+
+    println!("[asset_commands] bytes_len={}", bytes.len());
+
+    // Base64 编码
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    let mime = extension_to_mime(&ext);
+
+    let data_url = format!("data:{};base64,{}", mime, b64);
+
+    println!("[asset_commands] mime={}", mime);
+    println!("[asset_commands] data_url_len={}", data_url.len());
+
+    Ok(data_url)
 }

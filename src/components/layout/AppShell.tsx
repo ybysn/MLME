@@ -1,11 +1,14 @@
 /**
  * 模块职责：主布局壳组件，管理文档状态并向下分发文件操作与编辑器内容。
  * 当前输入：无（顶层组件）。
- * 当前输出：两栏布局（左侧 SidebarPanel + 中间 EditorPanel），文件操作与大纲跳转。
+ * 当前输出：
+ *   - 无活动文档时：欢迎页（WelcomeScreen）
+ *   - 有活动文档时：两栏布局（左侧 SidebarPanel + 中间 EditorPanel）
  * 后续扩展点：快捷键绑定、自动保存、关闭未保存确认。
  */
 import { useState, useCallback, useMemo, useRef } from "react";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { WelcomeScreen } from "./WelcomeScreen";
 import { SidebarPanel } from "./SidebarPanel";
 import {
   EditorPanel,
@@ -27,6 +30,9 @@ export function AppShell() {
   const [doc, setDoc] = useState<DocumentState>(createEmptyDocument);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const editorRef = useRef<EditorPanelHandle>(null);
+
+  /** 是否有活动文档（已打开文件或已新建文档） */
+  const hasActiveDocument = doc.isEditing;
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);
@@ -135,7 +141,13 @@ export function AppShell() {
     }
   }, [doc.content, doc.fileName]);
 
-  // ── 渲染 ──────────────────────────────────────
+  // ── 欢迎页 ────────────────────────────────────
+
+  if (!hasActiveDocument) {
+    return <WelcomeScreen onNewDocument={handleNew} onOpenFile={handleOpen} />;
+  }
+
+  // ── 编辑器工作区 ──────────────────────────────
 
   return (
     <div className={`app-shell ${!isSidebarVisible ? "app-shell--sidebar-hidden" : ""}`}>

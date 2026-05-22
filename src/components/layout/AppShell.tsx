@@ -44,6 +44,7 @@ import {
   type AppSettings,
 } from "../../services/settings_service";
 import { exportMarkdownToHtml } from "../../services/export_service";
+import { printMarkdownDocument } from "../../services/print_service";
 import { writeHtmlFile } from "../../services/file_service";
 import { createLogger } from "../../services/logger";
 
@@ -454,6 +455,17 @@ export function AppShell() {
                   alert("HTML 导出成功");
                 } catch (err) {
                   alert(`HTML 导出失败: ${err instanceof Error ? err.message : String(err)}`);
+                }
+              }}
+              onPrint={async () => {
+                try {
+                  await printMarkdownDocument({
+                    content: doc.content,
+                    currentPath: doc.currentPath,
+                    fileName: doc.fileName,
+                  });
+                } catch (err) {
+                  alert(`打印失败: ${err instanceof Error ? err.message : String(err)}`);
                 }
               }}
             />

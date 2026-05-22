@@ -76,6 +76,7 @@ export interface EditorPanelProps {
   onOpenSettings: () => void;
   onUpdateSettings: (partial: { editorFontSize?: number; editorFontFamily?: string }) => void;
   onExportHtml: () => void;
+  onPrint: () => void;
 }
 
 export interface EditorPanelHandle {
@@ -146,6 +147,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       defaultViewMode,
       onUpdateSettings,
       onExportHtml,
+      onPrint,
     },
     ref,
   ) {
@@ -657,6 +659,13 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
             onClick={onExportHtml}
           >
             导出
+          </button>
+          <button
+            className="editor-toolbar__btn"
+            title="打印/PDF"
+            onClick={onPrint}
+          >
+            打印
           </button>
           <button
             className="editor-toolbar__btn"

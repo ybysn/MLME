@@ -91,3 +91,10 @@ pub fn write_markdown_file(path: String, content: String) -> Result<(), String> 
 
     Ok(())
 }
+
+/// 检查指定路径的文件是否存在（用于调试 convertFileSrc 前的路径）。
+#[tauri::command]
+pub fn file_exists(path: String) -> Result<bool, String> {
+    let path_buf = Path::new(&path);
+    Ok(path_buf.exists())
+}

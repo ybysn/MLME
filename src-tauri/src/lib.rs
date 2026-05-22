@@ -13,6 +13,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             file_commands::read_markdown_file,
             file_commands::write_markdown_file,
+            file_commands::file_exists,
             asset_commands::save_image_asset,
         ])
         .run(tauri::generate_context!())

@@ -155,6 +155,22 @@ pub fn save_image_asset(
         .ok_or_else(|| "图片路径包含无效字符".to_string())?
         .to_string();
 
+    // 调试输出：验证保存路径与预期是否一致
+    println!(
+        "[asset_commands] save_image_asset {{ \
+         markdown_path: \"{}\", \
+         md_parent: \"{}\", \
+         asset_dir: \"{}\", \
+         saved_path: \"{}\", \
+         relative_path: \"{}\" \
+         }}",
+        markdown_path,
+        md_parent.display(),
+        assets_dir.display(),
+        asset_path,
+        relative_path,
+    );
+
     Ok(ImageAssetPayload {
         asset_path,
         relative_path,

@@ -201,6 +201,10 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
         for (const file of imageFiles) {
           try {
+            console.debug("[EditorPanel] insert image asset", {
+              currentPath,
+              fileName: file.name,
+            });
             const payload = await saveImageAsset(currentPath, file);
             const mdImage = `![${payload.file_name}](${payload.relative_path})\n`;
             const insertPos = cursorPos + offset;
@@ -282,6 +286,39 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         await handleInsertImageFiles(Array.from(files));
       },
       [handleInsertImageFiles],
+    );
+
+    // ── 粘贴图片 ────────────────────────────────
+
+    const handlePaste = useCallback(
+      (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const items = e.clipboardData.items;
+        const imageItems: DataTransferItem[] = [];
+
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.startsWith("image/")) {
+            imageItems.push(items[i]);
+          }
+        }
+
+        if (imageItems.length === 0) return; // 无图片，走默认文本粘贴
+
+        e.preventDefault();
+
+        if (!currentPath) {
+          showStatus("请先保存 Markdown 文件，再粘贴图片");
+          return;
+        }
+
+        const files = imageItems
+          .map((item) => item.getAsFile())
+          .filter((f): f is File => f !== null);
+
+        if (files.length > 0) {
+          handleInsertImageFiles(files);
+        }
+      },
+      [currentPath, handleInsertImageFiles, showStatus],
     );
 
     // ── 键盘快捷键 ────────────────────────────
@@ -398,6 +435,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onPaste={handlePaste}
         placeholder="在此输入 Markdown 内容..."
         spellCheck={false}
       />

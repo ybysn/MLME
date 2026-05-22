@@ -1,28 +1,35 @@
 /**
- * 模块职责：左侧文件树面板，提供文件操作入口（新建/打开/保存/另存为）。
- * 当前输入：文件操作回调、文档状态（文件名、是否脏、是否编辑中）。
- * 当前输出：操作按钮、最近文件占位、工作区占位。
- * 后续扩展点：最近文件列表、工作区文件树、拖拽排序。
+ * 模块职责：左侧文件树面板，提供文件操作入口和最近文件列表。
+ * 当前输入：文件操作回调、文档状态、最近文件列表、打开最近文件回调。
+ * 当前输出：操作按钮、当前文件信息、最近文件列表。
+ * 后续扩展点：工作区文件树、拖拽排序、清空最近文件。
  */
+import type { RecentFileItem } from "../../services/recent_files_service";
 
 export interface FileTreePanelProps {
   fileName: string;
   isDirty: boolean;
   isEditing: boolean;
+  currentPath: string | null;
+  recentFiles: RecentFileItem[];
   onNew: () => void;
   onOpen: () => void;
   onSave: () => void;
   onSaveAs: () => void;
+  onOpenRecentFile: (path: string) => void;
 }
 
 export function FileTreePanel({
   fileName,
   isDirty,
   isEditing,
+  currentPath,
+  recentFiles,
   onNew,
   onOpen,
   onSave,
   onSaveAs,
+  onOpenRecentFile,
 }: FileTreePanelProps) {
   return (
     <div className="panel panel--file-tree">
@@ -62,10 +69,27 @@ export function FileTreePanel({
 
         <section className="file-tree-section">
           <h3 className="file-tree-section__title">最近文件</h3>
-          <div className="file-tree-section__placeholder">
-            暂无最近打开的文件
-          </div>
+          {recentFiles.length === 0 ? (
+            <div className="file-tree-section__placeholder">
+              暂无最近打开的文件
+            </div>
+          ) : (
+            <ul className="recent-file-list">
+              {recentFiles.map((item) => (
+                <li
+                  key={item.path}
+                  className={`recent-file-list__item ${item.path === currentPath ? "recent-file-list__item--active" : ""}`}
+                  onClick={() => onOpenRecentFile(item.path)}
+                  title={item.path}
+                >
+                  <span className="recent-file-list__name">{item.fileName}</span>
+                  <span className="recent-file-list__path">{item.path}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
+
         <section className="file-tree-section">
           <h3 className="file-tree-section__title">工作区</h3>
           <div className="file-tree-section__placeholder">

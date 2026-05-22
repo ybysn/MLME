@@ -1,23 +1,29 @@
 /**
  * 模块职责：欢迎页组件，用于未打开任何文档时的启动界面。
- * 当前输入：onNewDocument、onOpenFile 两个回调。
- * 当前输出：产品名、说明文字、新建/打开按钮、最近文件占位。
- * 后续扩展点：最近文件列表展示、工作区入口、模板入口、版本号。
+ * 当前输入：onNewDocument、onOpenFile 回调、recentFiles 列表、onOpenRecentFile。
+ * 当前输出：产品名、说明文字、新建/打开按钮、最近文件列表。
+ * 后续扩展点：工作区入口、模板入口、版本号。
  */
 import { useEffect, useCallback } from "react";
+import type { RecentFileItem } from "../../services/recent_files_service";
 
 export interface WelcomeScreenProps {
   onNewDocument: () => void;
   onOpenFile: () => void;
+  recentFiles: RecentFileItem[];
+  onOpenRecentFile: (path: string) => void;
 }
 
-export function WelcomeScreen({ onNewDocument, onOpenFile }: WelcomeScreenProps) {
-  // 欢迎页状态下支持快捷键
+export function WelcomeScreen({
+  onNewDocument,
+  onOpenFile,
+  recentFiles,
+  onOpenRecentFile,
+}: WelcomeScreenProps) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
       if (!ctrl) return;
-
       switch (e.key.toLowerCase()) {
         case "n":
           e.preventDefault();
@@ -58,7 +64,23 @@ export function WelcomeScreen({ onNewDocument, onOpenFile }: WelcomeScreenProps)
         </div>
         <div className="welcome-screen__recent">
           <h3 className="welcome-screen__recent-title">最近文件</h3>
-          <p className="welcome-screen__recent-empty">暂无最近打开的文件</p>
+          {recentFiles.length === 0 ? (
+            <p className="welcome-screen__recent-empty">暂无最近打开的文件</p>
+          ) : (
+            <ul className="welcome-recent-list">
+              {recentFiles.map((item) => (
+                <li
+                  key={item.path}
+                  className="welcome-recent-list__item"
+                  onClick={() => onOpenRecentFile(item.path)}
+                  title={item.path}
+                >
+                  <span className="welcome-recent-list__name">{item.fileName}</span>
+                  <span className="welcome-recent-list__path">{item.path}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

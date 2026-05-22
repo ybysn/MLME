@@ -4,7 +4,7 @@
  * 当前输出：
  *   - 无活动文档时：欢迎页（WelcomeScreen）
  *   - 有活动文档时：两栏布局（左侧 SidebarPanel + 中间 EditorPanel）
- * 后续扩展点：快捷键绑定、自动保存、关闭未保存确认。
+ * 后续扩展点：关闭未保存确认、自动保存。
  */
 import { useState, useCallback, useMemo, useRef } from "react";
 import { open, save } from "@tauri-apps/plugin-dialog";
@@ -25,8 +25,14 @@ import {
   parseMarkdownOutline,
   type MarkdownOutlineItem,
 } from "../../editor/markdown/parse_outline";
+import {
+  loadRecentFiles,
+  addRecentFile,
+  removeRecentFile,
+  type RecentFileItem,
+} from "../../services/recent_files_service";
 
-/** 从对话框返回值中提取路径字符串；兼容 string 和 { path } 两种格式 */
+/** 从对话框返回值中提取路径字符串 */
 function extractDialogPath(result: string | { path: string } | null): string | null {
   if (!result) return null;
   if (typeof result === "string") return result;
@@ -34,12 +40,16 @@ function extractDialogPath(result: string | { path: string } | null): string | n
   return null;
 }
 
+function extractFileName(fullPath: string): string {
+  return fullPath.split(/[\\/]/).pop() ?? "unknown.md";
+}
+
 export function AppShell() {
   const [doc, setDoc] = useState<DocumentState>(createEmptyDocument);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [recentFiles, setRecentFiles] = useState<RecentFileItem[]>(loadRecentFiles);
   const editorRef = useRef<EditorPanelHandle>(null);
 
-  /** 是否有活动文档（已打开文件或已新建文档） */
   const hasActiveDocument = doc.isEditing;
 
   const toggleSidebar = useCallback(() => {
@@ -59,6 +69,37 @@ export function AppShell() {
   const handleSelectOutlineItem = useCallback((item: MarkdownOutlineItem) => {
     editorRef.current?.scrollToLine(item.line);
   }, []);
+
+  // ── 最近文件操作 ──────────────────────────────
+
+  const addToRecent = useCallback(
+    (filePath: string, name?: string) => {
+      const fileName = name ?? extractFileName(filePath);
+      setRecentFiles((prev) => addRecentFile(prev, filePath, fileName));
+    },
+    [],
+  );
+
+  const handleOpenRecentFile = useCallback(
+    async (filePath: string) => {
+      try {
+        const payload = await readMarkdownFile(filePath);
+        setDoc({
+          currentPath: payload.path,
+          fileName: payload.file_name,
+          content: payload.content,
+          isDirty: false,
+          isEditing: true,
+        });
+        addToRecent(payload.path, payload.file_name);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        alert(`打开文件失败: ${message}`);
+        setRecentFiles((prev) => removeRecentFile(prev, filePath));
+      }
+    },
+    [addToRecent],
+  );
 
   // ── 文件操作 ──────────────────────────────────
 
@@ -89,15 +130,17 @@ export function AppShell() {
         isDirty: false,
         isEditing: true,
       });
+      addToRecent(payload.path, payload.file_name);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       alert(`打开文件失败: ${message}`);
     }
-  }, []);
+  }, [addToRecent]);
 
   const handleSave = useCallback(async () => {
     let targetPath = doc.currentPath;
-    if (!targetPath) {
+    const isFirstSave = !targetPath;
+    if (isFirstSave) {
       const raw = await save({
         filters: [{ name: "Markdown", extensions: ["md"] }],
         defaultPath: doc.fileName.endsWith(".md")
@@ -108,22 +151,25 @@ export function AppShell() {
       if (!savePath) return;
       targetPath = savePath;
     }
+    // targetPath is guaranteed to be a string at this point
+    const resolvedPath: string = targetPath!;
 
     try {
-      await writeMarkdownFile(targetPath, doc.content);
-      const name = targetPath.split(/[\\/]/).pop() ?? "unknown.md";
+      await writeMarkdownFile(resolvedPath, doc.content);
+      const name = extractFileName(resolvedPath);
       setDoc({
-        currentPath: targetPath,
+        currentPath: resolvedPath,
         fileName: name,
         content: doc.content,
         isDirty: false,
         isEditing: true,
       });
+      if (isFirstSave) addToRecent(resolvedPath, name);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       alert(`保存文件失败: ${message}`);
     }
-  }, [doc.currentPath, doc.content, doc.fileName]);
+  }, [doc.currentPath, doc.content, doc.fileName, addToRecent]);
 
   const handleSaveAs = useCallback(async () => {
     try {
@@ -137,7 +183,7 @@ export function AppShell() {
       if (!savePath) return;
 
       await writeMarkdownFile(savePath, doc.content);
-      const name = savePath.split(/[\\/]/).pop() ?? "unknown.md";
+      const name = extractFileName(savePath);
       setDoc({
         currentPath: savePath,
         fileName: name,
@@ -145,16 +191,24 @@ export function AppShell() {
         isDirty: false,
         isEditing: true,
       });
+      addToRecent(savePath, name);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       alert(`另存为失败: ${message}`);
     }
-  }, [doc.content, doc.fileName]);
+  }, [doc.content, doc.fileName, addToRecent]);
 
   // ── 欢迎页 ────────────────────────────────────
 
   if (!hasActiveDocument) {
-    return <WelcomeScreen onNewDocument={handleNew} onOpenFile={handleOpen} />;
+    return (
+      <WelcomeScreen
+        onNewDocument={handleNew}
+        onOpenFile={handleOpen}
+        recentFiles={recentFiles}
+        onOpenRecentFile={handleOpenRecentFile}
+      />
+    );
   }
 
   // ── 编辑器工作区 ──────────────────────────────
@@ -168,10 +222,13 @@ export function AppShell() {
               fileName: doc.fileName,
               isDirty: doc.isDirty,
               isEditing: doc.isEditing,
+              currentPath: doc.currentPath,
+              recentFiles,
               onNew: handleNew,
               onOpen: handleOpen,
               onSave: handleSave,
               onSaveAs: handleSaveAs,
+              onOpenRecentFile: handleOpenRecentFile,
             }}
             outlineProps={{
               outlineItems: outlineResult.items,

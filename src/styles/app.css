@@ -262,6 +262,50 @@ body {
   text-align: center;
 }
 
+/* 最近文件列表（侧栏） */
+.recent-file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recent-file-list__item {
+  padding: 4px var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.recent-file-list__item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.recent-file-list__item--active {
+  background-color: var(--color-bg-tertiary);
+}
+
+.recent-file-list__item--active .recent-file-list__name {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.recent-file-list__name {
+  display: block;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-file-list__path {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ===== 编辑器面板 ===== */
 .editor-toolbar {
   display: flex;
@@ -736,4 +780,39 @@ body {
 .welcome-screen__recent-empty {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+}
+
+.welcome-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.welcome-recent-list__item {
+  padding: 6px var(--spacing-md);
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-light);
+  margin-bottom: var(--spacing-xs);
+}
+
+.welcome-recent-list__item:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-accent);
+}
+
+.welcome-recent-list__name {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.welcome-recent-list__path {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

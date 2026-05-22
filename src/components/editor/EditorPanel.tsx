@@ -40,6 +40,7 @@ export interface EditorPanelProps {
   onSave: () => void;
   onOpen: () => void;
   onNew: () => void;
+  onToggleSidebar: () => void;
 }
 
 export interface EditorPanelHandle {
@@ -69,6 +70,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       onSave,
       onOpen,
       onNew,
+      onToggleSidebar,
     },
     ref,
   ) {
@@ -154,12 +156,14 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
             e.preventDefault();
             onNew();
             break;
+          case "\\":
+            e.preventDefault();
+            onToggleSidebar();
+            break;
         }
       },
-      [applyCommand, onSave, onOpen, onNew],
+      [applyCommand, onSave, onOpen, onNew, onToggleSidebar],
     );
-
-    // 预览模式下保留文件操作快捷键
     const handlePreviewKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         const ctrl = e.ctrlKey || e.metaKey;
@@ -178,9 +182,13 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
             e.preventDefault();
             onNew();
             break;
+          case "\\":
+            e.preventDefault();
+            onToggleSidebar();
+            break;
         }
       },
-      [onSave, onOpen, onNew],
+      [onSave, onOpen, onNew, onToggleSidebar],
     );
 
     // ── 统计 ────────────────────────────────────
@@ -233,6 +241,14 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     return (
       <div className="panel panel--editor">
         <div className="editor-toolbar">
+          <button
+            className="editor-toolbar__btn"
+            title="切换侧边栏 (Ctrl+\)"
+            onClick={onToggleSidebar}
+          >
+            &#9776;
+          </button>
+          <span className="editor-toolbar__sep" />
           {/* 编辑命令按钮 */}
           <button className="editor-toolbar__btn" title="一级标题 (H1)" onClick={() => applyCommand(setHeading, 1)}>H1</button>
           <button className="editor-toolbar__btn" title="二级标题 (H2)" onClick={() => applyCommand(setHeading, 2)}>H2</button>

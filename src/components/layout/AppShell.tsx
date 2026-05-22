@@ -25,7 +25,12 @@ import {
 
 export function AppShell() {
   const [doc, setDoc] = useState<DocumentState>(createEmptyDocument);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const editorRef = useRef<EditorPanelHandle>(null);
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarVisible((prev) => !prev);
+  }, []);
 
   const outlineResult = useMemo(() => {
     const items = parseMarkdownOutline(doc.content);
@@ -133,25 +138,27 @@ export function AppShell() {
   // ── 渲染 ──────────────────────────────────────
 
   return (
-    <div className="app-shell">
-      <aside className="app-shell__sidebar">
-        <SidebarPanel
-          fileTreeProps={{
-            fileName: doc.fileName,
-            isDirty: doc.isDirty,
-            isEditing: doc.isEditing,
-            onNew: handleNew,
-            onOpen: handleOpen,
-            onSave: handleSave,
-            onSaveAs: handleSaveAs,
-          }}
-          outlineProps={{
-            outlineItems: outlineResult.items,
-            isEditing: doc.isEditing,
-            onSelectOutlineItem: handleSelectOutlineItem,
-          }}
-        />
-      </aside>
+    <div className={`app-shell ${!isSidebarVisible ? "app-shell--sidebar-hidden" : ""}`}>
+      {isSidebarVisible && (
+        <aside className="app-shell__sidebar">
+          <SidebarPanel
+            fileTreeProps={{
+              fileName: doc.fileName,
+              isDirty: doc.isDirty,
+              isEditing: doc.isEditing,
+              onNew: handleNew,
+              onOpen: handleOpen,
+              onSave: handleSave,
+              onSaveAs: handleSaveAs,
+            }}
+            outlineProps={{
+              outlineItems: outlineResult.items,
+              isEditing: doc.isEditing,
+              onSelectOutlineItem: handleSelectOutlineItem,
+            }}
+          />
+        </aside>
+      )}
       <main className="app-shell__main">
         <EditorPanel
           ref={editorRef}
@@ -164,6 +171,7 @@ export function AppShell() {
           onSave={handleSave}
           onOpen={handleOpen}
           onNew={handleNew}
+          onToggleSidebar={toggleSidebar}
         />
       </main>
     </div>

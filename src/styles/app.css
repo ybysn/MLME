@@ -93,6 +93,11 @@ body {
   background-color: var(--color-bg);
 }
 
+/* 隐藏侧边栏时确保主区域占满 */
+.app-shell--sidebar-hidden .app-shell__main {
+  flex: 1;
+}
+
 /* ===== 侧边栏面板 ===== */
 .sidebar-panel {
   display: flex;

@@ -431,6 +431,7 @@ export function AppShell() {
               onToggleSidebar={toggleSidebar}
               onToggleAutoSave={() => handleSaveSettings({ ...settings, autoSaveEnabled: !settings.autoSaveEnabled })}
               onOpenSettings={() => setSettingsOpen(true)}
+              onUpdateSettings={(partial) => handleSaveSettings({ ...settings, ...partial })}
             />
           </main>
         </div>

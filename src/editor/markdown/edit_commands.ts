@@ -205,6 +205,32 @@ export function setHeading(content: string, start: number, _end: number, level: 
   };
 }
 
+/**
+ * 设置标题级别（0=段落, 1-6=H1-H6）。
+ * 由工具栏标题下拉调用，替代旧 H1/H2 按钮。
+ */
+export function setHeadingLevel(
+  content: string,
+  start: number,
+  _end: number,
+  level: number,
+): EditCommandResult {
+  if (level === 0) {
+    // 段落：移除当前行所有标题标记
+    const { lineStart, lineEnd } = getLineBounds(content, start);
+    const line = content.slice(lineStart, lineEnd);
+    const newLine = line.replace(/^ {0,3}#{1,6} /, "");
+    const newContent = content.slice(0, lineStart) + newLine + content.slice(lineEnd);
+    const offset = newLine.length - line.length;
+    return {
+      content: newContent,
+      selectionStart: Math.max(0, start + offset),
+      selectionEnd: Math.max(0, start + offset),
+    };
+  }
+  return setHeading(content, start, _end, level);
+}
+
 export function toggleBlockquote(content: string, start: number, end: number): EditCommandResult {
   return toggleLinePrefix(content, start, end, BLOCKQUOTE_CONFIG);
 }

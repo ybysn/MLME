@@ -22,7 +22,7 @@ import {
   toggleOrderedList,
   insertCodeBlock,
   insertLink,
-  setHeading,
+  setHeadingLevel,
   type EditCommandResult,
 } from "../../editor/markdown/edit_commands";
 import { MarkdownPreview } from "./MarkdownPreview";
@@ -74,6 +74,7 @@ export interface EditorPanelProps {
   onToggleSidebar: () => void;
   onToggleAutoSave: () => void;
   onOpenSettings: () => void;
+  onUpdateSettings: (partial: { editorFontSize?: number; editorFontFamily?: string }) => void;
 }
 
 export interface EditorPanelHandle {
@@ -89,6 +90,36 @@ const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
   { value: "edit", label: "编辑" },
   { value: "preview", label: "预览" },
   { value: "split", label: "分屏" },
+];
+
+const FONT_OPTIONS: { label: string; value: string }[] = [
+  { label: "系统默认", value: "Consolas, 'Microsoft YaHei', monospace" },
+  { label: "Consolas", value: "Consolas, monospace" },
+  { label: "Microsoft YaHei", value: "'Microsoft YaHei', sans-serif" },
+  { label: "微软雅黑", value: "微软雅黑, 'Microsoft YaHei', sans-serif" },
+  { label: "宋体", value: "宋体, SimSun, serif" },
+  { label: "黑体", value: "黑体, SimHei, sans-serif" },
+  { label: "楷体", value: "楷体, KaiTi, serif" },
+  { label: "仿宋", value: "仿宋, FangSong, serif" },
+  { label: "等线", value: "等线, 'DengXian', sans-serif" },
+  { label: "Arial", value: "Arial, sans-serif" },
+  { label: "Times New Roman", value: "'Times New Roman', serif" },
+  { label: "Courier New", value: "'Courier New', monospace" },
+  { label: "Monaco", value: "Monaco, monospace" },
+  { label: "Menlo", value: "Menlo, monospace" },
+  { label: "JetBrains Mono", value: "'JetBrains Mono', monospace" },
+];
+
+const FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 18, 20, 22, 24, 26, 28, 32, 36];
+
+const HEADING_OPTIONS: { label: string; level: number }[] = [
+  { label: "段落", level: 0 },
+  { label: "H1", level: 1 },
+  { label: "H2", level: 2 },
+  { label: "H3", level: 3 },
+  { label: "H4", level: 4 },
+  { label: "H5", level: 5 },
+  { label: "H6", level: 6 },
 ];
 
 export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
@@ -112,6 +143,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       onToggleAutoSave,
       onOpenSettings,
       defaultViewMode,
+      onUpdateSettings,
     },
     ref,
   ) {
@@ -542,8 +574,25 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
             &#9776;
           </button>
           <span className="editor-toolbar__sep" />
-          <button className="editor-toolbar__btn" title="一级标题 (H1)" onClick={() => applyCommand(setHeading, 1)}>H1</button>
-          <button className="editor-toolbar__btn" title="二级标题 (H2)" onClick={() => applyCommand(setHeading, 2)}>H2</button>
+          <select
+            className="editor-toolbar__select editor-toolbar__select--heading"
+            title="标题级别"
+            onChange={(e) => {
+              const level = Number(e.target.value);
+              applyCommand(setHeadingLevel, level);
+              e.target.value = ""; // 重置为默认空选项
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>
+              标题
+            </option>
+            {HEADING_OPTIONS.map((opt) => (
+              <option key={opt.level} value={opt.level}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           <span className="editor-toolbar__sep" />
           <button className="editor-toolbar__btn" title="加粗 (Ctrl+B)" onClick={() => applyCommand(toggleBold)}><strong>B</strong></button>
           <button className="editor-toolbar__btn" title="斜体 (Ctrl+I)" onClick={() => applyCommand(toggleItalic)}><em>I</em></button>
@@ -558,6 +607,32 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           <button className="editor-toolbar__btn" title="插入图片" onClick={handleImageButtonClick}>&#128247;</button>
 
           <span className="editor-toolbar__spacer" />
+
+          <select
+            className="editor-toolbar__select editor-toolbar__select--font"
+            title="字体"
+            value={editorFontFamily}
+            onChange={(e) => onUpdateSettings({ editorFontFamily: e.target.value })}
+          >
+            {FONT_OPTIONS.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="editor-toolbar__select editor-toolbar__select--size"
+            title="字号"
+            value={editorFontSize}
+            onChange={(e) => onUpdateSettings({ editorFontSize: Number(e.target.value) })}
+          >
+            {FONT_SIZE_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
 
           {/* 视图模式切换 */}
           <span className="editor-toolbar__sep" />

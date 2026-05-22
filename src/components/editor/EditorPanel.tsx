@@ -176,6 +176,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     const [activeMatchIndex, setActiveMatchIndex] = useState(0);
     const matchesRef = useRef<FindMatch[]>([]);
     const [outlineScrollTarget, setOutlineScrollTarget] = useState<string | null>(null);
+    const openEditableStartRef = useRef<number | null>(null);
 
     // 点击外部关闭导出菜单
     useEffect(() => {
@@ -250,18 +251,20 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       pendingSelectionRef.current = null;
     }, [content]);
 
-    // 打开文件/新建文档后自动聚焦 textarea
+    // 打开文件/新建文档后自动聚焦 textarea（仅源码/分屏模式）
     useEffect(() => {
       if (!isEditing) return;
-      if (viewMode === "wysiwyg") return; // WYSIWYG doesn't have textarea
+      if (viewMode === "wysiwyg") return;
 
       const textarea = textareaRef.current;
       if (!textarea) return;
 
-      // requestAnimationFrame 确保 DOM 更新完成
       const raf = requestAnimationFrame(() => {
         textarea.focus();
-        console.timeEnd("[PERF] open file to editable");
+        if (openEditableStartRef.current != null) {
+          console.log("[PERF] open file to editable", (performance.now() - openEditableStartRef.current).toFixed(1), "ms");
+          openEditableStartRef.current = null;
+        }
       });
       return () => cancelAnimationFrame(raf);
     }, [fileName, currentPath, isEditing, viewMode]);
@@ -269,7 +272,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     // 记录文件打开性能
     useEffect(() => {
       if (isEditing) {
-        console.time("[PERF] open file to editable");
+        openEditableStartRef.current = performance.now();
       }
     }, [isEditing, fileName]);
 
@@ -401,10 +404,11 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       setActiveMatchIndex(0);
     }, []);
 
-    // 写作模式下全局 Ctrl+\ 切换侧边栏
+    // 写作模式下全局 Ctrl+\ 切换侧边栏（跳过 IME 组合输入）
     useEffect(() => {
       if (viewMode !== "wysiwyg") return;
       const handler = (e: KeyboardEvent) => {
+        if (e.isComposing || e.key === "Process") return;
         if ((e.ctrlKey || e.metaKey) && e.key === "\\") {
           e.preventDefault();
           onToggleSidebar();
@@ -587,6 +591,9 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
     const handleEditKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        // 跳过 IME 组合输入
+        if (e.nativeEvent.isComposing || e.key === "Process") return;
+
         const ctrl = e.ctrlKey || e.metaKey;
         if (!ctrl) return;
 

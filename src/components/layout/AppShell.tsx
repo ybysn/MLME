@@ -1,11 +1,12 @@
 /**
- * 模块职责：主布局壳组件，管理文档状态、未保存变更保护、自动保存。
+ * 模块职责：主布局壳组件，管理文档状态、未保存变更保护、自动保存、设置。
  */
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { SidebarPanel } from "./SidebarPanel";
 import { ConfirmDialog } from "../dialogs/ConfirmDialog";
+import { SettingsPanel } from "../settings/SettingsPanel";
 import {
   EditorPanel,
   type EditorPanelHandle,
@@ -38,9 +39,13 @@ import {
   type RecentWorkspaceItem,
 } from "../../services/recent_workspaces_service";
 import {
-  getAutoSaveEnabled,
-  setAutoSaveEnabled as persistAutoSaveEnabled,
+  getSettings,
+  saveSettings,
+  type AppSettings,
 } from "../../services/settings_service";
+import { createLogger } from "../../services/logger";
+
+const logger = createLogger("AppShell");
 
 function extractDialogPath(result: string | { path: string } | null): string | null {
   if (!result) return null;
@@ -66,26 +71,54 @@ interface UnsavedConfirmState {
 }
 
 export function AppShell() {
+  // ── 设置 ──────────────────────────────────────
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const s = getSettings();
+    logger.debug("init settings", s);
+    return s;
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // ── 文档状态 ──────────────────────────────────
   const [doc, setDoc] = useState<DocumentState>(createEmptyDocument);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(settings.sidebarVisibleByDefault);
   const [recentFiles, setRecentFiles] = useState<RecentFileItem[]>(loadRecentFiles);
   const [currentWorkspacePath, setCurrentWorkspacePath] = useState<string | null>(null);
   const [workspaceTree, setWorkspaceTree] = useState<MarkdownTreeItem[]>([]);
   const [recentWorkspaces, setRecentWorkspaces] = useState<RecentWorkspaceItem[]>(loadRecentWorkspaces);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(getAutoSaveEnabled);
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "error">("idle");
   const editorRef = useRef<EditorPanelHandle>(null);
-  const [unsavedConfirm, setUnsavedConfirm] = useState<UnsavedConfirmState>({
-    visible: false,
-    action: null,
-  });
+  const [unsavedConfirm, setUnsavedConfirm] = useState<UnsavedConfirmState>({ visible: false, action: null });
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const actionRef = useRef<PendingAction | null>(null);
 
-  // 始终同步 action 到 ref，避免闭包过期
   actionRef.current = unsavedConfirm.action;
-
   const hasActiveDocument = doc.isEditing;
+
+  // 同步主题到 <html>
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", settings.theme);
+    logger.debug("data-theme set", { current: document.documentElement.getAttribute("data-theme") });
+  }, [settings.theme]);
+
+  // 诊断：设置变化时输出传递给 EditorPanel 的值
+  useEffect(() => {
+    logger.debug("settings changed → EditorPanel props", {
+      editorFontSize: settings.editorFontSize,
+      editorFontFamily: settings.editorFontFamily,
+      autoSaveEnabled: settings.autoSaveEnabled,
+      autoSaveDelayMs: settings.autoSaveDelayMs,
+      defaultViewMode: settings.defaultViewMode,
+      sidebarVisibleByDefault: settings.sidebarVisibleByDefault,
+    });
+  }, [
+    settings.editorFontSize,
+    settings.editorFontFamily,
+    settings.autoSaveEnabled,
+    settings.autoSaveDelayMs,
+    settings.defaultViewMode,
+    settings.sidebarVisibleByDefault,
+  ]);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);
@@ -105,7 +138,17 @@ export function AppShell() {
     editorRef.current?.scrollToLine(item.line);
   }, []);
 
-  // ── 保存（返回 boolean 供确认流程使用）──────────
+  // ── 设置保存 ──────────────────────────────────
+
+  const handleSaveSettings = useCallback((newSettings: AppSettings) => {
+    logger.debug("handleSaveSettings", { oldSettings: settings, newSettings });
+    saveSettings(newSettings);
+    setSettings(newSettings);
+    setSettingsOpen(false);
+    logger.debug("handleSaveSettings done, new state", newSettings);
+  }, [settings]);
+
+  // ── 保存 ──────────────────────────────────────
 
   const doSave = useCallback(async (): Promise<boolean> => {
     let targetPath = doc.currentPath;
@@ -120,7 +163,6 @@ export function AppShell() {
       targetPath = savePath;
     }
     const resolvedPath: string = targetPath!;
-
     try {
       await writeMarkdownFile(resolvedPath, doc.content);
       const name = extractFileName(resolvedPath);
@@ -142,70 +184,43 @@ export function AppShell() {
     }
   }, [doc.currentPath, doc.content, doc.fileName]);
 
-  // 包装为 void 版本供 EditorPanel 使用
   const handleSave = useCallback(() => { void doSave(); }, [doSave]);
 
-  // ── 未保存变更保护 ────────────────────────────
+  // ── 未保存保护 ────────────────────────────────
 
   const confirmBeforeLosingChanges = useCallback(
     (action: PendingAction) => {
-      if (!doc.isDirty) {
-        void action();
-        return;
-      }
+      if (!doc.isDirty) { void action(); return; }
       setUnsavedConfirm({ visible: true, action });
     },
     [doc.isDirty],
   );
 
-  // 保存并继续
   const handleSaveAndContinue = useCallback(async () => {
     setUnsavedConfirm({ visible: false, action: null });
     const action = actionRef.current;
     const ok = await doSave();
-    if (ok && typeof action === "function") {
-      void action();
-    }
+    if (ok && typeof action === "function") void action();
   }, [doSave]);
 
-  // 不保存继续
   const handleDiscardAndContinue = useCallback(() => {
     const action = actionRef.current;
     setUnsavedConfirm({ visible: false, action: null });
-    if (typeof action === "function") {
-      void action();
-    }
+    if (typeof action === "function") void action();
   }, []);
 
-  // 取消
   const handleCancelConfirm = useCallback(() => {
     setUnsavedConfirm({ visible: false, action: null });
   }, []);
 
   // ── 自动保存 ──────────────────────────────────
 
-  const toggleAutoSave = useCallback(() => {
-    setAutoSaveEnabled((prev) => {
-      const next = !prev;
-      persistAutoSaveEnabled(next);
-      if (!next) {
-        setAutoSaveStatus("idle");
-        if (autoSaveTimerRef.current) {
-          clearTimeout(autoSaveTimerRef.current);
-          autoSaveTimerRef.current = null;
-        }
-      }
-      return next;
-    });
-  }, []);
-
   useEffect(() => {
-    if (!autoSaveEnabled || !doc.currentPath || !doc.isDirty) {
+    if (!settings.autoSaveEnabled || !doc.currentPath || !doc.isDirty) {
       setAutoSaveStatus((prev) => (prev === "saving" ? "idle" : prev));
       return;
     }
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-
     autoSaveTimerRef.current = setTimeout(async () => {
       setAutoSaveStatus("saving");
       try {
@@ -215,17 +230,14 @@ export function AppShell() {
       } catch {
         setAutoSaveStatus("error");
       }
-    }, 2000);
-
+    }, settings.autoSaveDelayMs);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [autoSaveEnabled, doc.currentPath, doc.content, doc.isDirty]);
+  }, [settings.autoSaveEnabled, settings.autoSaveDelayMs, doc.currentPath, doc.content, doc.isDirty]);
 
   useEffect(() => {
-    if (!doc.isDirty && autoSaveStatus === "error") {
-      setAutoSaveStatus("idle");
-    }
+    if (!doc.isDirty && autoSaveStatus === "error") setAutoSaveStatus("idle");
   }, [doc.isDirty, autoSaveStatus]);
 
   // ── 最近文件 ──────────────────────────────────
@@ -234,8 +246,7 @@ export function AppShell() {
     (filePath: string, name?: string) => {
       const fileName = name ?? extractFileName(filePath);
       setRecentFiles((prev) => addRecentFile(prev, filePath, fileName));
-    },
-    [],
+    }, [],
   );
 
   const handleOpenRecentFile = useCallback(
@@ -243,13 +254,7 @@ export function AppShell() {
       confirmBeforeLosingChanges(async () => {
         try {
           const payload = await readMarkdownFile(filePath);
-          setDoc({
-            currentPath: payload.path,
-            fileName: payload.file_name,
-            content: payload.content,
-            isDirty: false,
-            isEditing: true,
-          });
+          setDoc({ currentPath: payload.path, fileName: payload.file_name, content: payload.content, isDirty: false, isEditing: true });
           addToRecent(payload.path, payload.file_name);
         } catch (err) {
           alert(`打开文件失败: ${err instanceof Error ? err.message : String(err)}`);
@@ -268,14 +273,9 @@ export function AppShell() {
 
   const handleOpenWorkspace = useCallback(async () => {
     try {
-      const raw = await open({
-        directory: true,
-        multiple: false,
-        title: "选择工作区文件夹",
-      });
+      const raw = await open({ directory: true, multiple: false, title: "选择工作区文件夹" });
       const folderPath = extractDialogPath(raw);
       if (!folderPath) return;
-
       const tree = await listMarkdownFilesInFolder(folderPath);
       setCurrentWorkspacePath(folderPath);
       setWorkspaceTree(tree);
@@ -302,13 +302,7 @@ export function AppShell() {
       confirmBeforeLosingChanges(async () => {
         try {
           const payload = await readMarkdownFile(filePath);
-          setDoc({
-            currentPath: payload.path,
-            fileName: payload.file_name,
-            content: payload.content,
-            isDirty: false,
-            isEditing: true,
-          });
+          setDoc({ currentPath: payload.path, fileName: payload.file_name, content: payload.content, isDirty: false, isEditing: true });
           addToRecent(payload.path, payload.file_name);
         } catch (err) {
           alert(`打开文件失败: ${err instanceof Error ? err.message : String(err)}`);
@@ -322,34 +316,18 @@ export function AppShell() {
 
   const handleNew = useCallback(() => {
     confirmBeforeLosingChanges(() => {
-      setDoc({
-        currentPath: null,
-        fileName: "未命名文档",
-        content: "",
-        isDirty: false,
-        isEditing: true,
-      });
+      setDoc({ currentPath: null, fileName: "未命名文档", content: "", isDirty: false, isEditing: true });
     });
   }, [confirmBeforeLosingChanges]);
 
   const handleOpen = useCallback(() => {
     confirmBeforeLosingChanges(async () => {
       try {
-        const raw = await open({
-          filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
-          multiple: false,
-        });
+        const raw = await open({ filters: [{ name: "Markdown", extensions: ["md", "markdown"] }], multiple: false });
         const filePath = extractDialogPath(raw);
         if (!filePath) return;
-
         const payload = await readMarkdownFile(filePath);
-        setDoc({
-          currentPath: payload.path,
-          fileName: payload.file_name,
-          content: payload.content,
-          isDirty: false,
-          isEditing: true,
-        });
+        setDoc({ currentPath: payload.path, fileName: payload.file_name, content: payload.content, isDirty: false, isEditing: true });
         addToRecent(payload.path, payload.file_name);
       } catch (err) {
         alert(`打开文件失败: ${err instanceof Error ? err.message : String(err)}`);
@@ -359,22 +337,12 @@ export function AppShell() {
 
   const handleSaveAs = useCallback(async () => {
     try {
-      const raw = await save({
-        filters: [{ name: "Markdown", extensions: ["md"] }],
-        defaultPath: doc.fileName.endsWith(".md") ? doc.fileName : `${doc.fileName}.md`,
-      });
+      const raw = await save({ filters: [{ name: "Markdown", extensions: ["md"] }], defaultPath: doc.fileName.endsWith(".md") ? doc.fileName : `${doc.fileName}.md` });
       const savePath = extractDialogPath(raw);
       if (!savePath) return;
-
       await writeMarkdownFile(savePath, doc.content);
       const name = extractFileName(savePath);
-      setDoc({
-        currentPath: savePath,
-        fileName: name,
-        content: doc.content,
-        isDirty: false,
-        isEditing: true,
-      });
+      setDoc({ currentPath: savePath, fileName: name, content: doc.content, isDirty: false, isEditing: true });
       addToRecent(savePath, name);
       setAutoSaveStatus("idle");
     } catch (err) {
@@ -394,6 +362,13 @@ export function AppShell() {
           onDiscardAndContinue={handleDiscardAndContinue}
         />
       )}
+
+      <SettingsPanel
+        open={settingsOpen}
+        settings={settings}
+        onSave={handleSaveSettings}
+        onCancel={() => setSettingsOpen(false)}
+      />
 
       {!hasActiveDocument ? (
         <WelcomeScreen
@@ -444,14 +419,18 @@ export function AppShell() {
               isEditing={doc.isEditing}
               headingCount={outlineResult.stats.headingCount}
               currentPath={doc.currentPath}
-              autoSaveEnabled={autoSaveEnabled}
+              autoSaveEnabled={settings.autoSaveEnabled}
               autoSaveStatus={autoSaveStatus}
+              editorFontSize={settings.editorFontSize}
+              editorFontFamily={settings.editorFontFamily}
+              defaultViewMode={settings.defaultViewMode}
               onContentChange={setContent}
               onSave={handleSave}
               onOpen={handleOpen}
               onNew={handleNew}
               onToggleSidebar={toggleSidebar}
-              onToggleAutoSave={toggleAutoSave}
+              onToggleAutoSave={() => handleSaveSettings({ ...settings, autoSaveEnabled: !settings.autoSaveEnabled })}
+              onOpenSettings={() => setSettingsOpen(true)}
             />
           </main>
         </div>

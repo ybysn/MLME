@@ -27,6 +27,9 @@ import {
 } from "../../editor/markdown/edit_commands";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { saveImageAsset } from "../../services/asset_service";
+import { createLogger } from "../../services/logger";
+
+const logger = createLogger("EditorPanel");
 
 export type ViewMode = "edit" | "preview" | "split";
 
@@ -58,18 +61,19 @@ export interface EditorPanelProps {
   isDirty: boolean;
   isEditing: boolean;
   headingCount: number;
-  /** 当前已保存文件的绝对路径；未保存时为 null */
   currentPath: string | null;
-  /** 自动保存是否开启 */
   autoSaveEnabled: boolean;
-  /** 自动保存状态 */
   autoSaveStatus: "idle" | "saving" | "error";
+  editorFontSize: number;
+  editorFontFamily: string;
+  defaultViewMode: "edit" | "preview" | "split";
   onContentChange: (content: string) => void;
   onSave: () => void;
   onOpen: () => void;
   onNew: () => void;
   onToggleSidebar: () => void;
   onToggleAutoSave: () => void;
+  onOpenSettings: () => void;
 }
 
 export interface EditorPanelHandle {
@@ -98,21 +102,60 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       currentPath,
       autoSaveEnabled,
       autoSaveStatus,
+      editorFontSize,
+      editorFontFamily,
       onContentChange,
       onSave,
       onOpen,
       onNew,
       onToggleSidebar,
       onToggleAutoSave,
+      onOpenSettings,
+      defaultViewMode,
     },
     ref,
   ) {
-    const [viewMode, setViewMode] = useState<ViewMode>("edit");
+    const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pendingSelectionRef = useRef<PendingSelection | null>(null);
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // 诊断：打印接收到的设置 props
+    useEffect(() => {
+      logger.debug("received props", {
+        editorFontSize,
+        editorFontFamily,
+        autoSaveEnabled,
+        autoSaveStatus,
+        currentViewMode: viewMode,
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editorFontSize, editorFontFamily, autoSaveEnabled]);
+
+    // 当用户保存设置改变 defaultViewMode 时，立即应用到当前 viewMode
+    useEffect(() => {
+      logger.debug("defaultViewMode prop changed, syncing viewMode", {
+        defaultViewMode,
+        currentViewMode: viewMode,
+      });
+      setViewMode(defaultViewMode);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [defaultViewMode]);
+
+    // 打开新文件时重置 viewMode 为默认模式
+    useEffect(() => {
+      if (isEditing) {
+        const docKey = currentPath || fileName;
+        logger.debug("document changed, resetting viewMode", {
+          docKey,
+          defaultViewMode,
+        });
+        setViewMode(defaultViewMode);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPath, fileName, isEditing]);
 
     /** 显示即时状态消息，3 秒后自动消失 */
     const showStatus = useCallback((message: string) => {
@@ -460,6 +503,10 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           (viewMode === "split" ? "editor-textarea editor-textarea--split" : "editor-textarea") +
           (isDragOver ? " editor-textarea--drag-over" : "")
         }
+        style={{
+          fontSize: `${editorFontSize}px`,
+          fontFamily: editorFontFamily,
+        }}
         value={content}
         onChange={(e) => onContentChange(e.target.value)}
         onKeyDown={handleEditKeyDown}
@@ -525,6 +572,15 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
               </button>
             ))}
           </div>
+
+          <span className="editor-toolbar__sep" />
+          <button
+            className="editor-toolbar__btn"
+            title="设置"
+            onClick={onOpenSettings}
+          >
+            &#9881;
+          </button>
         </div>
 
         {/* 状态消息 */}

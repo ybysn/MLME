@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Manual markdown image test outputs
+tests/markdown_cases/*.assets/
+tests/markdown_cases/未命名文档.md
+tests/markdown_cases/新建文件.md

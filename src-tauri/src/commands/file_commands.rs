@@ -98,3 +98,124 @@ pub fn file_exists(path: String) -> Result<bool, String> {
     let path_buf = Path::new(&path);
     Ok(path_buf.exists())
 }
+
+/// 工作区文件树节点。
+#[derive(Serialize, Clone)]
+pub struct MarkdownTreeItem {
+    /// 文件或目录的绝对路径
+    pub path: String,
+    /// 文件或目录名
+    pub file_name: String,
+    /// 相对于工作区根目录的路径
+    pub relative_path: String,
+    /// 是否为目录
+    pub is_dir: bool,
+    /// 子节点（仅目录有值）
+    pub children: Option<Vec<MarkdownTreeItem>>,
+}
+
+/// 需要忽略的目录名（精确匹配）。
+const IGNORED_DIRS: &[&str] = &[
+    "node_modules", ".git", "target", "dist", "build", ".next", "out",
+];
+
+/// 需要忽略的目录后缀。
+fn is_ignored_dir(name: &str) -> bool {
+    IGNORED_DIRS.contains(&name) || name.ends_with(".assets")
+}
+
+/// 递归扫描目录，收集 Markdown 文件和子目录。
+fn scan_dir(dir: &Path, base_dir: &Path, depth: u32) -> Vec<MarkdownTreeItem> {
+    let mut items: Vec<MarkdownTreeItem> = Vec::new();
+
+    if depth > 5 {
+        return items;
+    }
+
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return items,
+    };
+
+    let mut dirs: Vec<MarkdownTreeItem> = Vec::new();
+    let mut files: Vec<MarkdownTreeItem> = Vec::new();
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string();
+
+        if path.is_dir() {
+            if is_ignored_dir(&name) {
+                continue;
+            }
+            let children = scan_dir(&path, base_dir, depth + 1);
+            // 空目录不显示
+            if children.is_empty() {
+                continue;
+            }
+            let relative_path = path
+                .strip_prefix(base_dir)
+                .unwrap_or(&path)
+                .to_string_lossy()
+                .to_string();
+            dirs.push(MarkdownTreeItem {
+                path: path.to_string_lossy().to_string(),
+                file_name: name,
+                relative_path,
+                is_dir: true,
+                children: Some(children),
+            });
+        } else {
+            // 仅收集 .md / .markdown 文件
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if ext != "md" && ext != "markdown" {
+                continue;
+            }
+            let relative_path = path
+                .strip_prefix(base_dir)
+                .unwrap_or(&path)
+                .to_string_lossy()
+                .to_string();
+            files.push(MarkdownTreeItem {
+                path: path.to_string_lossy().to_string(),
+                file_name: name,
+                relative_path,
+                is_dir: false,
+                children: None,
+            });
+        }
+    }
+
+    // 目录在前，文件在后，各自按名称排序
+    dirs.sort_by(|a, b| a.file_name.to_lowercase().cmp(&b.file_name.to_lowercase()));
+    files.sort_by(|a, b| a.file_name.to_lowercase().cmp(&b.file_name.to_lowercase()));
+
+    items.extend(dirs);
+    items.extend(files);
+    items
+}
+
+/// 扫描文件夹并返回 Markdown 文件树。
+/// 仅包含 .md/.markdown 文件和包含它们的目录。
+/// 忽略 node_modules、.git、target、dist、build、.next、out、
+/// 以及所有 .assets 目录。空目录不显示。最大深度 5 层。
+#[tauri::command]
+pub fn list_markdown_files_in_folder(
+    folder_path: String,
+) -> Result<Vec<MarkdownTreeItem>, String> {
+    let path_buf = Path::new(&folder_path);
+
+    if !path_buf.exists() {
+        return Err(format!("文件夹不存在: {}", folder_path));
+    }
+
+    if !path_buf.is_dir() {
+        return Err(format!("路径不是文件夹: {}", folder_path));
+    }
+
+    Ok(scan_dir(path_buf, path_buf, 0))
+}

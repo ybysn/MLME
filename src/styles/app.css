@@ -782,6 +782,94 @@ body {
   color: var(--color-text-muted);
 }
 
+/* 工作区文件树 */
+.workspace-header {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-open-btn {
+  width: 100%;
+  flex: none;
+  margin-top: 0;
+}
+
+.workspace-header__name {
+  font-weight: 500;
+}
+
+.workspace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workspace-tree__item {
+  user-select: none;
+}
+
+.workspace-tree__dir {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.workspace-tree__dir:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.workspace-tree__arrow {
+  flex-shrink: 0;
+  width: 14px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.workspace-tree__file {
+  display: block;
+  padding: 3px var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-tree__file:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.workspace-tree__file--active {
+  color: var(--color-accent);
+  font-weight: 500;
+  background-color: var(--color-bg-tertiary);
+}
+
+.workspace-tree__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-tree__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .welcome-recent-list {
   list-style: none;
   margin: 0;

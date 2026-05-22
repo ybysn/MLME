@@ -1,24 +1,30 @@
 /**
  * 模块职责：欢迎页组件，用于未打开任何文档时的启动界面。
- * 当前输入：onNewDocument、onOpenFile 回调、recentFiles 列表、onOpenRecentFile。
- * 当前输出：产品名、说明文字、新建/打开按钮、最近文件列表。
- * 后续扩展点：工作区入口、模板入口、版本号。
+ * 当前输入：onNewDocument、onOpenFile、onOpenWorkspace、recentFiles、recentWorkspaces。
+ * 当前输出：产品名、按钮、最近文件、最近工作区。
  */
 import { useEffect, useCallback } from "react";
 import type { RecentFileItem } from "../../services/recent_files_service";
+import type { RecentWorkspaceItem } from "../../services/recent_workspaces_service";
 
 export interface WelcomeScreenProps {
   onNewDocument: () => void;
   onOpenFile: () => void;
+  onOpenWorkspace: () => void;
   recentFiles: RecentFileItem[];
   onOpenRecentFile: (path: string) => void;
+  recentWorkspaces: RecentWorkspaceItem[];
+  onOpenRecentWorkspace: (path: string) => void;
 }
 
 export function WelcomeScreen({
   onNewDocument,
   onOpenFile,
+  onOpenWorkspace,
   recentFiles,
   onOpenRecentFile,
+  recentWorkspaces,
+  onOpenRecentWorkspace,
 }: WelcomeScreenProps) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -49,19 +55,36 @@ export function WelcomeScreen({
         <h1 className="welcome-screen__title">Shadow Markdown Editor</h1>
         <p className="welcome-screen__subtitle">本地优先的 Markdown 编辑器</p>
         <div className="welcome-screen__actions">
-          <button
-            className="welcome-screen__btn welcome-screen__btn--primary"
-            onClick={onNewDocument}
-          >
+          <button className="welcome-screen__btn welcome-screen__btn--primary" onClick={onNewDocument}>
             新建文档
           </button>
-          <button
-            className="welcome-screen__btn"
-            onClick={onOpenFile}
-          >
+          <button className="welcome-screen__btn" onClick={onOpenFile}>
             打开文件
           </button>
+          <button className="welcome-screen__btn" onClick={onOpenWorkspace}>
+            打开文件夹
+          </button>
         </div>
+
+        {recentWorkspaces.length > 0 && (
+          <div className="welcome-screen__recent">
+            <h3 className="welcome-screen__recent-title">最近工作区</h3>
+            <ul className="welcome-recent-list">
+              {recentWorkspaces.map((item) => (
+                <li
+                  key={item.path}
+                  className="welcome-recent-list__item"
+                  onClick={() => onOpenRecentWorkspace(item.path)}
+                  title={item.path}
+                >
+                  <span className="welcome-recent-list__name">{item.name}</span>
+                  <span className="welcome-recent-list__path">{item.path}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="welcome-screen__recent">
           <h3 className="welcome-screen__recent-title">最近文件</h3>
           {recentFiles.length === 0 ? (

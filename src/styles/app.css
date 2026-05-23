@@ -1133,9 +1133,11 @@ body {
 /* ===== 欢迎页 ===== */
 .welcome-screen {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  overflow-y: auto;
   width: 100vw;
   background-color: var(--color-bg);
   font-family: var(--font-family);
@@ -1162,6 +1164,7 @@ body {
 
 .welcome-screen__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-md);
   justify-content: center;
   margin-bottom: var(--spacing-xl);
@@ -1210,6 +1213,37 @@ body {
 .welcome-screen__recent-empty {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+}
+
+/* 小高度窗口：靠顶布局，减少间距 */
+@media (max-height: 720px) {
+  .welcome-screen {
+    justify-content: flex-start;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .welcome-screen__content {
+    padding: var(--spacing-md) var(--spacing-xl);
+  }
+
+  .welcome-screen__title {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .welcome-screen__subtitle {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .welcome-screen__actions {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .welcome-screen__recent {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+  }
 }
 
 /* 工作区文件树 */

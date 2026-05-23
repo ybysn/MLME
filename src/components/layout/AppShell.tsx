@@ -8,6 +8,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
 import { SidebarPanel } from "./SidebarPanel";
 import { ConfirmDialog } from "../dialogs/ConfirmDialog";
 import { QuickOpenDialog } from "../dialogs/QuickOpenDialog";
+import { CommandPaletteDialog, type CommandItem } from "../dialogs/CommandPaletteDialog";
 import { useWindowCloseGuard } from "../../app/use_window_close_guard";
 import { SettingsPanel } from "../settings/SettingsPanel";
 import {
@@ -119,6 +120,7 @@ export function AppShell() {
 
   // ── 快速打开 ─────────────────────────────
   const [quickOpenOpen, setQuickOpenOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   // ── 工作区文件扁平化（用于快速打开搜索） ──
   const flatWorkspaceFiles = useMemo(
@@ -155,15 +157,22 @@ export function AppShell() {
     }
   }, []);
 
-  // ── 快捷键：F11 / Ctrl+Shift+F / Esc / Ctrl+P ──
+  // ── 快捷键：F11 / Ctrl+Shift+F / Esc / Ctrl+P / Ctrl+Shift+P ──
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.isComposing || e.key === "Process") return;
 
       // Ctrl+P / Meta+P：快速打开
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "p") {
         e.preventDefault();
         setQuickOpenOpen(true);
+        return;
+      }
+
+      // Ctrl+Shift+P / Meta+Shift+P：命令面板
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setCommandPaletteOpen(true);
         return;
       }
 
@@ -535,6 +544,94 @@ export function AppShell() {
     }
   }, [doc.content, doc.fileName, addToRecent]);
 
+  // ── 导出 HTML ─────────────────────────────────
+  const handleExportHtml = useCallback(async () => {
+    try {
+      const raw = await save({
+        filters: [{ name: "HTML", extensions: ["html"] }],
+        defaultPath: doc.fileName.endsWith(".md")
+          ? doc.fileName.replace(/\.md$/, ".html")
+          : `${doc.fileName}.html`,
+      });
+      const savePath = extractDialogPath(raw);
+      if (!savePath) return;
+      const html = await exportMarkdownToHtml({
+        content: doc.content,
+        currentPath: doc.currentPath,
+        fileName: doc.fileName,
+      });
+      await writeHtmlFile(savePath, html);
+      alert("HTML 导出成功");
+    } catch (err) {
+      alert(`HTML 导出失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [doc.content, doc.currentPath, doc.fileName]);
+
+  // ── 导出 PDF ──────────────────────────────────
+  const handleExportPdf = useCallback(async () => {
+    try {
+      const raw = await save({
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+        defaultPath: doc.fileName.endsWith(".md")
+          ? doc.fileName.replace(/\.md$/, ".pdf")
+          : `${doc.fileName}.pdf`,
+      });
+      const savePath = extractDialogPath(raw);
+      if (!savePath) return;
+      const html = await buildPrintableHtml({
+        content: doc.content,
+        currentPath: doc.currentPath,
+        fileName: doc.fileName,
+      });
+      await exportHtmlToPdf(html, savePath);
+      alert("PDF 导出成功");
+    } catch (err) {
+      alert(`PDF 导出失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [doc.content, doc.currentPath, doc.fileName]);
+
+  // ── 打印 ──────────────────────────────────────
+  const handlePrint = useCallback(async () => {
+    try {
+      await printMarkdownDocument({
+        content: doc.content,
+        currentPath: doc.currentPath,
+        fileName: doc.fileName,
+      });
+    } catch (err) {
+      alert(`打印失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [doc.content, doc.currentPath, doc.fileName]);
+
+  // ── 命令面板列表 ──────────────────────────────
+  const commands: CommandItem[] = useMemo(() => [
+    { id: "new", title: "新建文件", keywords: ["new"], shortcut: "Ctrl+N" },
+    { id: "open", title: "打开文件", keywords: ["open"], shortcut: "Ctrl+O" },
+    { id: "save", title: "保存", keywords: ["save"], shortcut: "Ctrl+S" },
+    { id: "saveAs", title: "另存为", keywords: ["save as"], shortcut: "Ctrl+Shift+S" },
+    { id: "wysiwyg", title: "写作模式", description: "所见即所得编辑", keywords: ["wysiwyg", "writing"], disabled: !hasActiveDocument },
+    { id: "source", title: "源码模式", description: "Markdown 源码编辑", keywords: ["source", "code"], disabled: !hasActiveDocument },
+    { id: "split", title: "分屏模式", description: "源码与预览并排", keywords: ["split", "preview"], disabled: !hasActiveDocument },
+    { id: "settings", title: "打开设置", keywords: ["settings", "config"] },
+    { id: "exportHtml", title: "导出 HTML", description: "导出为 HTML 文件", keywords: ["export", "html"], disabled: !hasActiveDocument },
+    { id: "exportPdf", title: "导出 PDF", description: "导出为 PDF 文件", keywords: ["export", "pdf"], disabled: !hasActiveDocument },
+  ], [hasActiveDocument]);
+
+  const handleCommandExecute = useCallback((commandId: string) => {
+    switch (commandId) {
+      case "new": handleNew(); break;
+      case "open": handleOpen(); break;
+      case "save": handleSave(); break;
+      case "saveAs": void handleSaveAs(); break;
+      case "wysiwyg": handleSaveSettings({ ...settings, defaultViewMode: "wysiwyg" }); break;
+      case "source": handleSaveSettings({ ...settings, defaultViewMode: "source" }); break;
+      case "split": handleSaveSettings({ ...settings, defaultViewMode: "split" }); break;
+      case "settings": setSettingsOpen(true); break;
+      case "exportHtml": void handleExportHtml(); break;
+      case "exportPdf": void handleExportPdf(); break;
+    }
+  }, [handleNew, handleOpen, handleSave, handleSaveAs, handleSaveSettings, settings, handleExportHtml, handleExportPdf]);
+
   // ── 窗口关闭未保存确认 ──────────────────────
   const { closeGuardDialog } = useWindowCloseGuard({
     isDirty: doc.isDirty,
@@ -565,6 +662,13 @@ export function AppShell() {
           handleOpenRecentFile(path);
         }}
         onClose={() => setQuickOpenOpen(false)}
+      />
+
+      <CommandPaletteDialog
+        open={commandPaletteOpen}
+        commands={commands}
+        onClose={() => setCommandPaletteOpen(false)}
+        onExecute={handleCommandExecute}
       />
 
       {closeGuardDialog}
@@ -646,61 +750,9 @@ export function AppShell() {
               isFocusMode={isFocusMode}
               onToggleFocus={toggleFocusMode}
               onToggleFullscreen={toggleFullscreen}
-              onExportHtml={async () => {
-                try {
-                  const raw = await save({
-                    filters: [{ name: "HTML", extensions: ["html"] }],
-                    defaultPath: doc.fileName.endsWith(".md")
-                      ? doc.fileName.replace(/\.md$/, ".html")
-                      : `${doc.fileName}.html`,
-                  });
-                  const savePath = extractDialogPath(raw);
-                  if (!savePath) return;
-
-                  const html = await exportMarkdownToHtml({
-                    content: doc.content,
-                    currentPath: doc.currentPath,
-                    fileName: doc.fileName,
-                  });
-                  await writeHtmlFile(savePath, html);
-                  alert("HTML 导出成功");
-                } catch (err) {
-                  alert(`HTML 导出失败: ${err instanceof Error ? err.message : String(err)}`);
-                }
-              }}
-              onExportPdf={async () => {
-                try {
-                  const raw = await save({
-                    filters: [{ name: "PDF", extensions: ["pdf"] }],
-                    defaultPath: doc.fileName.endsWith(".md")
-                      ? doc.fileName.replace(/\.md$/, ".pdf")
-                      : `${doc.fileName}.pdf`,
-                  });
-                  const savePath = extractDialogPath(raw);
-                  if (!savePath) return;
-
-                  const html = await buildPrintableHtml({
-                    content: doc.content,
-                    currentPath: doc.currentPath,
-                    fileName: doc.fileName,
-                  });
-                  await exportHtmlToPdf(html, savePath);
-                  alert("PDF 导出成功");
-                } catch (err) {
-                  alert(`PDF 导出失败: ${err instanceof Error ? err.message : String(err)}`);
-                }
-              }}
-              onPrint={async () => {
-                try {
-                  await printMarkdownDocument({
-                    content: doc.content,
-                    currentPath: doc.currentPath,
-                    fileName: doc.fileName,
-                  });
-                } catch (err) {
-                  alert(`打印失败: ${err instanceof Error ? err.message : String(err)}`);
-                }
-              }}
+              onExportHtml={handleExportHtml}
+              onExportPdf={handleExportPdf}
+              onPrint={handlePrint}
             />
           </main>
         </div>

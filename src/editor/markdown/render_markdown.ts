@@ -39,6 +39,12 @@ md.renderer.rules.fence = function (tokens, idx, _options, _env, _self) {
     return `<pre><code>${md.utils.escapeHtml(code)}</code></pre>\n`;
   }
 
+  // Mermaid 图表 → 输出占位容器，由 mermaid_renderer 后续渲染为 SVG
+  if (lang.toLowerCase() === "mermaid") {
+    const escapedCode = md.utils.escapeHtml(code);
+    return `<div class="mermaid-block" data-mermaid-source="${md.utils.escapeHtml(code)}"><pre><code>${escapedCode}</code></pre></div>\n`;
+  }
+
   // 有语言标记 → 尝试 highlight.js
   const langLower = lang.toLowerCase();
   try {

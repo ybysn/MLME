@@ -6,6 +6,7 @@ import {
   renderMarkdownToHtml,
   extractMarkdownImageSources,
 } from "../../editor/markdown/render_markdown";
+import { renderMermaidBlocks } from "../../editor/markdown/mermaid_renderer";
 import {
   resolveMarkdownAssetPath,
   safeDecodeMarkdownImageSrc,
@@ -175,6 +176,28 @@ export function MarkdownPreview({
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     };
   }, []);
+
+  // ── Mermaid 图表渲染 ──
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const theme = (document.documentElement.getAttribute("data-theme") as "light" | "dark") ?? "light";
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        await renderMermaidBlocks(container, theme);
+      } catch {
+        // 渲染失败不影响其他内容
+      }
+      // mermaid.render 是异步的，可能在 React 重新渲染期间完成
+      if (cancelled) return;
+    };
+
+    void run();
+    return () => { cancelled = true; };
+  }, [html]);
 
   return (
     <div

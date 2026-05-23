@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mermaid</title>
+  <style>body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei", sans-serif;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  font-size: 17px;
+  line-height: 1.75;
+  color: #1f2937;
+  background-color: #ffffff;
+}
+h1, h2, h3, h4, h5, h6 { margin-top: 1.4em; margin-bottom: 0.5em; font-weight: 600; line-height: 1.35; }
+h1 { font-size: 1.7em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.3em; }
+h2 { font-size: 1.4em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25em; }
+h3 { font-size: 1.2em; }
+p { margin-bottom: 0.75em; }
+blockquote { margin: 0.5em 0; padding: 0.5em 1em; border-left: 3px solid #4a7cf7; color: #4b5563; background: #f9fafb; border-radius: 0 4px 4px 0; }
+ul, ol { margin-bottom: 0.75em; padding-left: 1.5em; }
+li { margin-bottom: 0.25em; }
+code { padding: 0.15em 0.4em; font-size: 0.9em; font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace; background: #f3f4f6; border-radius: 3px; }
+pre { margin: 0.75em 0; padding: 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; overflow-x: auto; }
+pre code { padding: 0; background: none; font-size: 14px; line-height: 1.5; }
+table { width: 100%; margin: 0.75em 0; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 6px 12px; border: 1px solid #d1d5db; text-align: left; }
+th { background: #f9fafb; font-weight: 600; }
+tr:nth-child(even) { background: #f9fafb; }
+a { color: #4a7cf7; text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { display: block; max-width: 100%; height: auto; margin: 16px 0; }
+hr { margin: 1em 0; border: none; border-top: 1px solid #e5e7eb; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+/* 代码高亮 */
+.hljs-comment, .hljs-quote { color: #8a8fa0; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-type { color: #d73a49; }
+.hljs-string, .hljs-addition { color: #22863a; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-section, .hljs-selector-id { color: #6f42c1; }
+.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable { color: #e36209; }
+.hljs-name, .hljs-built_in, .hljs-builtin-name { color: #005cc5; }
+.hljs-meta, .hljs-meta-keyword { color: #8a8fa0; }
+.hljs-symbol, .hljs-bullet, .hljs-link { color: #d73a49; }
+.hljs-deletion { color: #d73a49; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 600; }
+.hljs-doctag, .hljs-formula { color: #6f42c1; }
+.hljs-params { color: #24292e; }
+.hljs-property { color: #005cc5; }
+.hljs-regexp { color: #22863a; }
+.hljs-selector-class, .hljs-selector-pseudo { color: #6f42c1; }
+.hljs-tag { color: #22863a; }
+
+/* KaTeX 数学公式 */
+.katex { font-size: 1.1em; }
+.katex-display { display: block; margin: 1em 0; text-align: center; }
+.katex-display > .katex { display: inline-block; white-space: nowrap; max-width: 100%; overflow-x: auto; }
+.katex-html { display: none; }</style>
+</head>
+<body>
+  <main class="markdown-body">
+<h1>Mermaid Diagram Test Cases</h1>
+<h2>1. Flowchart</h2>
+<div class="mermaid-block" data-mermaid-source="flowchart TD
+  A[开始] --&gt; B{是否完成}
+  B --&gt;|是| C[提交]
+  B --&gt;|否| D[继续]
+  D --&gt; B
+"><pre><code>flowchart TD
+  A[开始] --&gt; B{是否完成}
+  B --&gt;|是| C[提交]
+  B --&gt;|否| D[继续]
+  D --&gt; B
+</code></pre></div>
+<h2>2. Sequence Diagram</h2>
+<div class="mermaid-block" data-mermaid-source="sequenceDiagram
+  participant 用户
+  participant 编辑器
+  用户-&gt;&gt;编辑器: 输入 Markdown
+  编辑器--&gt;&gt;用户: 渲染图表
+  用户-&gt;&gt;编辑器: 保存文件
+  编辑器--&gt;&gt;用户: 保存成功
+"><pre><code>sequenceDiagram
+  participant 用户
+  participant 编辑器
+  用户-&gt;&gt;编辑器: 输入 Markdown
+  编辑器--&gt;&gt;用户: 渲染图表
+  用户-&gt;&gt;编辑器: 保存文件
+  编辑器--&gt;&gt;用户: 保存成功
+</code></pre></div>
+<h2>3. Class Diagram</h2>
+<div class="mermaid-block" data-mermaid-source="classDiagram
+  class Animal {
+    +name: string
+    +eat(): void
+  }
+  class Dog {
+    +bark(): void
+  }
+  Animal &lt;|-- Dog
+"><pre><code>classDiagram
+  class Animal {
+    +name: string
+    +eat(): void
+  }
+  class Dog {
+    +bark(): void
+  }
+  Animal &lt;|-- Dog
+</code></pre></div>
+<h2>4. State Diagram</h2>
+<div class="mermaid-block" data-mermaid-source="stateDiagram-v2
+  [*] --&gt; 空闲
+  空闲 --&gt; 编辑中: 开始编辑
+  编辑中 --&gt; 空闲: 停止输入
+  编辑中 --&gt; 保存中: Ctrl+S
+  保存中 --&gt; 空闲: 保存成功
+  保存中 --&gt; 保存中: 重试
+"><pre><code>stateDiagram-v2
+  [*] --&gt; 空闲
+  空闲 --&gt; 编辑中: 开始编辑
+  编辑中 --&gt; 空闲: 停止输入
+  编辑中 --&gt; 保存中: Ctrl+S
+  保存中 --&gt; 空闲: 保存成功
+  保存中 --&gt; 保存中: 重试
+</code></pre></div>
+<h2>5. Mermaid 语法错误（应显示错误不崩溃）</h2>
+<div class="mermaid-block" data-mermaid-source="flowchart TD
+  A --&gt; B
+  B --&gt;&gt;
+"><pre><code>flowchart TD
+  A --&gt; B
+  B --&gt;&gt;
+</code></pre></div>
+<h2>6. 非 mermaid 代码块（应继续高亮）</h2>
+<pre><code class="language-mermaidx">flowchart TD
+  A --&gt; B
+</code></pre>
+<pre><code class="hljs language-ts"><span class="hljs-keyword">const</span> foo = <span class="hljs-string">&quot;not mermaid&quot;</span>;
+</code></pre>
+<h2>7. 包含尖括号的 mermaid 代码（安全验证）</h2>
+<div class="mermaid-block" data-mermaid-source="flowchart TD
+  A[&quot;&lt;script&gt;alert(1)&lt;/script&gt;&quot;] --&gt; B[&quot;&lt;div onclick='...'&gt;&quot;]
+"><pre><code>flowchart TD
+  A[&quot;&lt;script&gt;alert(1)&lt;/script&gt;&quot;] --&gt; B[&quot;&lt;div onclick='...'&gt;&quot;]
+</code></pre></div>
+
+  </main>
+</body>
+</html>

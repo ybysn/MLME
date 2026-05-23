@@ -860,6 +860,44 @@ body {
 [data-theme="dark"] .katex { color: #e8e8f0; }
 [data-theme="dark"] .katex .mord { color: #e8e8f0; }
 
+/* ===== Mermaid 图表 ===== */
+.mermaid-block {
+  margin: 1em 0;
+  padding: 14px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow-x: auto;
+  text-align: center;
+}
+.mermaid-block pre {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+}
+.mermaid-rendered {
+  margin: 1em 0;
+  padding: 12px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+.mermaid-error-block {
+  margin: 1em 0;
+  padding: 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+.mermaid-error__msg {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 8px;
+}
+[data-theme="dark"] .mermaid-error-block { background: #3b1111; border-color: #7f1d1d; }
+[data-theme="dark"] .mermaid-error__msg { color: #fca5a5; }
+
 .markdown-preview table {
   width: 100%;
   margin: 0.75em 0;

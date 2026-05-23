@@ -26,11 +26,14 @@ import {
   type EditCommandResult,
 } from "../../editor/markdown/edit_commands";
 import { MarkdownPreview } from "./MarkdownPreview";
-import { saveImageAsset } from "../../services/asset_service";
 import { createLogger } from "../../services/logger";
 import { FindReplaceBar } from "./FindReplaceBar";
 import { TyporaEditorPanel } from "./TyporaEditorPanel";
 import type { TyporaEditorPanelHandle } from "./TyporaEditorPanel";
+import {
+  importImageFilesForMarkdown,
+} from "../../editor/image/image_asset_workflow";
+import { isImageFile, ALLOWED_IMAGE_FORMATS_STRING } from "../../editor/image/image_validation";
 import {
   findMatches,
   replaceCurrentMatch,
@@ -41,29 +44,6 @@ import {
 const logger = createLogger("EditorPanel");
 
 export type ViewMode = "wysiwyg" | "source" | "split";
-
-/** 允许的图片 MIME 类型 */
-const IMAGE_MIME_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/pjpeg",
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-  "image/bmp",
-  "image/x-icon",
-  "image/vnd.microsoft.icon",
-  "image/avif",
-]);
-
-/** MIME 类型回退——根据扩展名判断 */
-const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "jfif", "jpe", "gif", "webp", "svg", "bmp", "ico", "avif"]);
-
-function isImageFile(file: File): boolean {
-  if (file.type && IMAGE_MIME_TYPES.has(file.type)) return true;
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  return IMAGE_EXTS.has(ext);
-}
 
 export interface EditorPanelProps {
   content: string;
@@ -438,19 +418,26 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     // ── 统一图片插入流程 ──────────────────────
 
     /**
-     * 统一处理图片文件插入：支持工具栏按钮选择 & 拖拽。
-     * @param files 用户选择或拖入的 File 列表
-     */
+      * 源码/分屏模式下图片文件插入：复用统一导入工作流。
+      */
     const handleInsertImageFiles = useCallback(
       async (files: File[]) => {
-        const imageFiles = files.filter(isImageFile);
-        if (imageFiles.length === 0) {
-          showStatus("仅支持图片文件 (png, jpg, jpeg, gif, webp, svg)");
+        if (!currentPath) {
+          showStatus("请先保存 Markdown 文件，再插入图片");
           return;
         }
 
-        if (!currentPath) {
-          showStatus("请先保存 Markdown 文件，再插入图片");
+        const { results, errors } = await importImageFilesForMarkdown({
+          files,
+          markdownPath: currentPath,
+        });
+
+        if (results.length === 0) {
+          if (errors.length > 0) {
+            showStatus(errors[0].message);
+          } else {
+            showStatus(`仅支持图片文件 (${ALLOWED_IMAGE_FORMATS_STRING})`);
+          }
           return;
         }
 
@@ -458,49 +445,27 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         const cursorPos = textarea?.selectionStart ?? content.length;
 
         let newContent = content;
-        // 如果光标不在行首，先插入换行
         if (cursorPos > 0 && content[cursorPos - 1] !== "\n") {
-          newContent =
-            newContent.slice(0, cursorPos) + "\n" + newContent.slice(cursorPos);
+          newContent = newContent.slice(0, cursorPos) + "\n" + newContent.slice(cursorPos);
         }
-
         let offset = cursorPos > 0 && content[cursorPos - 1] !== "\n" ? 1 : 0;
-        let errorCount = 0;
-        let successCount = 0;
 
-        for (const file of imageFiles) {
-          try {
-            console.debug("[EditorPanel] insert image asset", {
-              currentPath,
-              fileName: file.name,
-            });
-            const payload = await saveImageAsset(currentPath, file);
-            const mdImage = `![${payload.file_name}](${payload.relative_path})\n`;
-            const insertPos = cursorPos + offset;
-            newContent =
-              newContent.slice(0, insertPos) +
-              mdImage +
-              newContent.slice(insertPos);
-            offset += mdImage.length;
-            successCount++;
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            errorCount++;
-            showStatus(`图片保存失败: ${msg}`);
-          }
+        for (const r of results) {
+          const mdImage = `![${r.fileName}](${r.relativePath})\n`;
+          const insertPos = cursorPos + offset;
+          newContent = newContent.slice(0, insertPos) + mdImage + newContent.slice(insertPos);
+          offset += mdImage.length;
         }
 
-        if (successCount > 0) {
-          pendingSelectionRef.current = {
-            start: cursorPos + offset,
-            end: cursorPos + offset,
-          };
-          onContentChange(newContent);
-          if (successCount === 1) {
-            showStatus(`已插入 1 张图片`);
-          } else {
-            showStatus(`已插入 ${successCount} 张图片`);
-          }
+        pendingSelectionRef.current = { start: cursorPos + offset, end: cursorPos + offset };
+        onContentChange(newContent);
+
+        if (errors.length > 0) {
+          showStatus(`已插入 ${results.length} 张，${errors.length} 张失败`);
+        } else if (results.length === 1) {
+          showStatus("已插入 1 张图片");
+        } else {
+          showStatus(`已插入 ${results.length} 张图片`);
         }
       },
       [content, currentPath, onContentChange, showStatus],

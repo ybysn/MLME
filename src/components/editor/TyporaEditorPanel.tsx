@@ -6,6 +6,8 @@
  *   - markdownUpdated 时用 normalizeMarkdownImageSources 清洗 blob/data/localhost
  *   - MutationObserver 监听新增 img 节点自动 patch
  *   - 图片插入时 ProseMirror 节点 src 使用 relativePath
+ * 查找高亮策略：
+ *   - 使用 ProseMirror Decoration 插件 writingFindPlugin，不再直接操作 DOM。
  * 生命周期安全：
  *   - generationRef 单调递增，所有异步任务执行前校验
  *   - img.isConnected 确保不操作已销毁 DOM（触发 ProseMirror 内部 DOM→state 链条）
@@ -37,6 +39,11 @@ import {
   safeDecodeMarkdownImageSrc,
 } from "../../services/path_service";
 import { readImageAssetAsDataUrl } from "../../services/asset_service";
+import {
+  writingFindFeature,
+  updateWritingFind as dispatchWritingFindState,
+  getWritingFindState,
+} from "../../editor/markdown/writing_find_plugin";
 
 export interface TyporaEditorPanelProps {
   content: string;
@@ -50,12 +57,13 @@ export interface TyporaEditorPanelProps {
 
 export interface TyporaEditorPanelHandle {
   insertImageFiles: (files: File[], source?: ImageInsertSource) => Promise<void>;
-  highlightFindMatches: (query: string, caseSensitive: boolean, activeIndex: number) => boolean;
-  clearFindHighlights: () => void;
-  scrollToFindMatch: (activeIndex: number) => void;
+  /** 更新写作模式查找高亮状态（ProseMirror Decoration 方式） */
+  updateWritingFind: (query: string, caseSensitive: boolean, activeIndex: number) => void;
+  /** 滚动到第 activeIndex 个查找匹配项（会同时更新 activeIndex） */
+  scrollToWritingFindMatch: (activeIndex: number) => void;
+  /** 获取当前插件中的匹配数 */
+  getWritingFindMatchCount: () => number;
   getSelectedText: () => string;
-  /** 注册查找参数 observer: ProseMirror DOM 重写后自动恢复高亮 */
-  setFindObserver: (opts: { query: string; caseSensitive: boolean; activeIndex: number } | null) => void;
   refreshContent: (newContent: string) => void;
 }
 
@@ -91,6 +99,9 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
     const currentPathRef = useRef(currentPath);
     currentPathRef.current = currentPath;
 
+    /** 查找高亮恢复：编辑器重建后重新 dispatch find meta */
+    const findRestoreRef = useRef<{ query: string; caseSensitive: boolean; activeIndex: number } | null>(null);
+
     const [isDragOver, setIsDragOver] = useState(false);
     /** 替换操作后触发编辑器重建的版本号 */
     const [refreshVersion, setRefreshVersion] = useState(0);
@@ -117,7 +128,6 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       return () => {
         isMountedRef.current = false;
         generationRef.current++;
-        if (findDebounceRef.current) clearTimeout(findDebounceRef.current);
         console.debug("[WRITING_LIFECYCLE] cleanup generation", generationRef.current);
         rafIdsRef.current.forEach((id) => cancelAnimationFrame(id));
         rafIdsRef.current.clear();
@@ -267,82 +277,51 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       [currentPath, isLive, safeRaf, patchAllImages],
     );
 
-    // ── 查找高亮（写作模式 DOM 层） ──
-    const findObserverRef = useRef<{ query: string; caseSensitive: boolean; activeIndex: number } | null>(null);
+    // ── 查找高亮（ProseMirror Decoration 层） ──
+    const updateWritingFind = useCallback((query: string, caseSensitive: boolean, activeIndex: number): void => {
+      if (query) {
+        findRestoreRef.current = { query, caseSensitive, activeIndex };
+      } else {
+        findRestoreRef.current = null;
+      }
+      if (!crepeRef.current) return;
+      const view = crepeRef.current.editor.ctx.get(editorViewCtx);
+      if (!view) return;
+      dispatchWritingFindState(view, query, caseSensitive, activeIndex);
+    }, []);
 
-    const highlightFindMatches = useCallback((query: string, caseSensitive: boolean, activeIndex: number): boolean => {
-      const container = containerRef.current;
-      if (!container || !query) return false;
+    const scrollToWritingFindMatch = useCallback((activeIndex: number): void => {
+      if (!crepeRef.current) return;
+      const view = crepeRef.current.editor.ctx.get(editorViewCtx);
+      if (!view) return;
 
-      clearFindHighlights();
+      const findState = getWritingFindState(view);
+      if (!findState || findState.ranges.length === 0) return;
 
-      const target = caseSensitive ? query : query.toLowerCase();
-      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
-        acceptNode: (node) => {
-          if (!node.textContent) return NodeFilter.FILTER_REJECT;
-          if (node.parentElement?.closest("script,style,pre,code")) return NodeFilter.FILTER_REJECT;
-          if (node.parentElement?.closest(".writing-find-match")) return NodeFilter.FILTER_REJECT;
-          const src = caseSensitive ? node.textContent : node.textContent.toLowerCase();
-          return src.includes(target) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-        },
+      const idx = Math.max(0, Math.min(activeIndex, findState.ranges.length - 1));
+
+      // 先更新 activeIndex，然后等一帧滚动
+      dispatchWritingFindState(view, findState.query, findState.caseSensitive, idx);
+
+      requestAnimationFrame(() => {
+        const updated = getWritingFindState(view);
+        if (!updated || updated.ranges.length === 0) return;
+        const range = updated.ranges[Math.min(idx, updated.ranges.length - 1)];
+        const domPos = view.domAtPos(range.from);
+        if (domPos.node) {
+          const el = domPos.node.nodeType === Node.TEXT_NODE
+            ? domPos.node.parentElement
+            : domPos.node as HTMLElement;
+          if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
       });
-
-      const textNodes: Text[] = [];
-      while (walker.nextNode()) textNodes.push(walker.currentNode as Text);
-
-      let globalIdx = 0;
-      for (const node of textNodes) {
-        const text = node.textContent ?? "";
-        const source = caseSensitive ? text : text.toLowerCase();
-        let pos = 0;
-        const frag = document.createDocumentFragment();
-
-        while (pos < text.length) {
-          const idx = source.indexOf(target, pos);
-          if (idx === -1) {
-            frag.appendChild(document.createTextNode(text.slice(pos)));
-            break;
-          }
-          if (idx > pos) frag.appendChild(document.createTextNode(text.slice(pos, idx)));
-          const mark = document.createElement("mark");
-          mark.className = "writing-find-match";
-          if (globalIdx === activeIndex) mark.classList.add("is-active");
-          mark.textContent = text.slice(idx, idx + target.length);
-          frag.appendChild(mark);
-          pos = idx + target.length;
-          globalIdx++;
-        }
-        node.parentNode?.replaceChild(frag, node);
-      }
-
-      return globalIdx > 0;
     }, []);
 
-    const clearFindHighlights = useCallback(() => {
-      const container = containerRef.current;
-      if (!container) return;
-      const marks = container.querySelectorAll(".writing-find-match");
-      for (const m of marks) {
-        const parent = m.parentNode;
-        if (parent) {
-          parent.replaceChild(document.createTextNode(m.textContent ?? ""), m);
-          parent.normalize();
-        }
-      }
-    }, []);
-
-    const scrollToFindMatch = useCallback((activeIndex: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const allMatches = container.querySelectorAll(".writing-find-match");
-      allMatches.forEach((m) => m.classList.remove("is-active"));
-
-      if (allMatches.length === 0) return;
-      const idx = Math.max(0, Math.min(activeIndex, allMatches.length - 1));
-      const match = allMatches[idx];
-      match.classList.add("is-active");
-      match.scrollIntoView({ block: "center", behavior: "smooth" });
+    const getWritingFindMatchCount = useCallback((): number => {
+      if (!crepeRef.current) return 0;
+      const view = crepeRef.current.editor.ctx.get(editorViewCtx);
+      if (!view) return 0;
+      return getWritingFindState(view)?.ranges.length ?? 0;
     }, []);
 
     const getSelectedText = useCallback((): string => {
@@ -363,29 +342,7 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       setRefreshVersion((v) => v + 1);
     }, []);
 
-    // ── 查找高亮自动恢复 observer ──
-    const setFindObserver = useCallback((opts: { query: string; caseSensitive: boolean; activeIndex: number } | null) => {
-      findObserverRef.current = opts;
-    }, []);
-
-    // ── find 恢复 debounce timer ──
-    const findDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const scheduleFindHighlight = useCallback(() => {
-      if (findDebounceRef.current) clearTimeout(findDebounceRef.current);
-      const opts = findObserverRef.current;
-      if (!opts || !opts.query) return;
-
-      findDebounceRef.current = setTimeout(() => {
-        if (!isMountedRef.current) return;
-        const ok = highlightFindMatches(opts.query, opts.caseSensitive, opts.activeIndex);
-        if (ok) {
-          requestAnimationFrame(() => scrollToFindMatch(opts.activeIndex));
-        }
-      }, 100);
-    }, [highlightFindMatches, scrollToFindMatch]);
-
-    // ── MutationObserver（图片 + 查找高亮自动恢复） ──
+    // ── MutationObserver（图片自动 patch） ──
     useEffect(() => {
       const container = containerRef.current;
       if (!container) return;
@@ -403,8 +360,6 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
             }
           }
         }
-
-        scheduleFindHighlight();
       });
 
       observer.observe(container, {
@@ -419,17 +374,16 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
         console.debug("[WRITING_OBSERVER] disconnected generation", generationRef.current);
         observer.disconnect();
       };
-    }, [isLive, patchSingleImage, scheduleFindHighlight]);
+    }, [isLive, patchSingleImage]);
 
     useImperativeHandle(ref, () => ({
       insertImageFiles,
-      highlightFindMatches,
-      clearFindHighlights,
-      scrollToFindMatch,
+      updateWritingFind,
+      scrollToWritingFindMatch,
+      getWritingFindMatchCount,
       getSelectedText,
-      setFindObserver,
       refreshContent,
-    }), [insertImageFiles, highlightFindMatches, clearFindHighlights, scrollToFindMatch, getSelectedText, setFindObserver, refreshContent]);
+    }), [insertImageFiles, updateWritingFind, scrollToWritingFindMatch, getWritingFindMatchCount, getSelectedText, refreshContent]);
 
     // ── 原生 capture-phase 拖拽 ──
     useEffect(() => {
@@ -542,6 +496,8 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       crepeRef.current = crepe;
       docKeyRef.current = docKey;
 
+      crepe.addFeature(writingFindFeature);
+
       crepe.on((api) => {
         api.markdownUpdated((_ctx, markdown) => {
           if (cancelled || !isMountedRef.current || generationRef.current !== createGen) return;
@@ -561,6 +517,17 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
         console.debug("[WRITING_LIFECYCLE] create done generation", createGen);
         console.log("[PERF][WritingMode] create editor", (performance.now() - createStart).toFixed(1), "ms");
         crepe.setReadonly(false);
+
+        // 编辑器重建后恢复查找高亮状态（替换操作会触发 refreshContent → 重建）
+        if (findRestoreRef.current) {
+          const view = crepe.editor.ctx.get(editorViewCtx);
+          dispatchWritingFindState(
+            view,
+            findRestoreRef.current.query,
+            findRestoreRef.current.caseSensitive,
+            findRestoreRef.current.activeIndex,
+          );
+        }
 
         safeRaf(() => patchAllImages());
         safeRaf(() => {

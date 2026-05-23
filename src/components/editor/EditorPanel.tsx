@@ -307,23 +307,23 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       const maxIdx = Math.max(0, matchesRef.current.length - 1);
       setActiveMatchIndex((prev) => Math.min(prev, maxIdx));
 
-      if (viewMode === "wysiwyg" && findQuery) {
-        typoraEditorRef.current?.highlightFindMatches(findQuery, caseSensitive, activeMatchIndex);
+      if (viewMode === "wysiwyg") {
+        typoraEditorRef.current?.updateWritingFind(findQuery, caseSensitive, activeMatchIndex);
       }
     }, [findQuery, caseSensitive, content, viewMode, activeMatchIndex]);
 
-    // ── 替换后延迟高亮（等待编辑器重建） ──
+    // ── 替换后延迟高亮（等待编辑器重建；TyporaEditorPanel 在 create().then() 中也会恢复） ──
     const scheduleWritingFindHighlight = useCallback(() => {
       let attempts = 0;
       const maxAttempts = 5;
       const tryHighlight = () => {
         if (!isFindOpen || viewMode !== "wysiwyg" || !findQuery) return;
-        const ok = typoraEditorRef.current?.highlightFindMatches(findQuery, caseSensitive, activeMatchIndex);
-        if (!ok && attempts < maxAttempts) {
+        typoraEditorRef.current?.updateWritingFind(findQuery, caseSensitive, activeMatchIndex);
+        if (attempts < maxAttempts) {
           attempts++;
           requestAnimationFrame(tryHighlight);
-        } else if (ok) {
-          typoraEditorRef.current?.scrollToFindMatch(activeMatchIndex);
+        } else {
+          typoraEditorRef.current?.scrollToWritingFindMatch(activeMatchIndex);
         }
       };
       requestAnimationFrame(tryHighlight);
@@ -333,11 +333,10 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     useEffect(() => {
       updateFindMatches();
       setActiveMatchIndex(0);
-      // 注册查找参数到 TyporaEditorPanel（用于自动恢复高亮）
       if (viewMode === "wysiwyg" && findQuery) {
-        typoraEditorRef.current?.setFindObserver({ query: findQuery, caseSensitive, activeIndex: 0 });
-      } else {
-        typoraEditorRef.current?.setFindObserver(null);
+        typoraEditorRef.current?.updateWritingFind(findQuery, caseSensitive, 0);
+      } else if (viewMode === "wysiwyg") {
+        typoraEditorRef.current?.updateWritingFind('', false, 0);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [findQuery, caseSensitive]);
@@ -357,13 +356,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       setActiveMatchIndex(idx);
 
       if (viewMode === "wysiwyg") {
-        // 同步 activeIndex 到 findObserver
-        typoraEditorRef.current?.setFindObserver({ query: findQuery, caseSensitive, activeIndex: idx });
-        // 高亮可能在上次编辑器重绘时丢失，先重高亮再滚动
-        const ok = typoraEditorRef.current?.highlightFindMatches(findQuery, caseSensitive, idx);
-        if (ok) {
-          typoraEditorRef.current?.scrollToFindMatch(idx);
-        }
+        typoraEditorRef.current?.scrollToWritingFindMatch(idx);
         return;
       }
 
@@ -454,8 +447,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       setReplaceText("");
       matchesRef.current = [];
       setActiveMatchIndex(0);
-      typoraEditorRef.current?.clearFindHighlights();
-      typoraEditorRef.current?.setFindObserver(null);
+      typoraEditorRef.current?.updateWritingFind('', false, 0);
     }, []);
 
     const toggleReplace = useCallback(() => {

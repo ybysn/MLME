@@ -1758,6 +1758,48 @@ body {
   white-space: nowrap;
 }
 
+.welcome-recent-list__item--stale {
+  opacity: 0.45;
+  cursor: default;
+  border-color: transparent;
+}
+
+.welcome-recent-list__item--stale:hover {
+  background-color: transparent;
+}
+
+.welcome-recent-list__stale-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 400;
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+.welcome-recent-list__clear-stale {
+  display: block;
+  margin-top: var(--spacing-sm);
+  padding: 6px 14px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+.welcome-recent-list__clear-stale:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
 /* ===== 未保存变更确认弹窗 ===== */
 .confirm-overlay {
   position: fixed;

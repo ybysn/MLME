@@ -10,6 +10,8 @@ export interface RecentFileItem {
   path: string;
   fileName: string;
   lastOpenedAt: string;
+  /** 标记文件已移动/删除，打开失败时设为 true */
+  stale?: boolean;
 }
 
 const STORAGE_KEY = "markdown-editor:recent-files";
@@ -89,6 +91,31 @@ export function updateRecentFilePath(
       ? { ...item, path: newPath, fileName: newFileName }
       : item,
   );
+  saveRecentFiles(updated);
+  return updated;
+}
+
+/**
+ * 将指定路径的最近文件标记为失效（文件不存在）。
+ */
+export function markRecentFileStale(
+  existing: RecentFileItem[],
+  path: string,
+): RecentFileItem[] {
+  const updated = existing.map((item) =>
+    item.path === path ? { ...item, stale: true } : item,
+  );
+  saveRecentFiles(updated);
+  return updated;
+}
+
+/**
+ * 移除所有失效的最近文件记录。
+ */
+export function removeStaleRecentFiles(
+  existing: RecentFileItem[],
+): RecentFileItem[] {
+  const updated = existing.filter((item) => !item.stale);
   saveRecentFiles(updated);
   return updated;
 }

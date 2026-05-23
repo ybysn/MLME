@@ -42,7 +42,7 @@ export function QuickOpenDialog({
     const items: QuickOpenItem[] = [];
 
     for (const f of recentFiles) {
-      if (!seen.has(f.path)) {
+      if (!seen.has(f.path) && !f.stale) {
         seen.add(f.path);
         items.push({ path: f.path, fileName: f.fileName, source: "recent" });
       }

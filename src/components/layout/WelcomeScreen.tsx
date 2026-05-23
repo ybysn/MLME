@@ -15,6 +15,7 @@ export interface WelcomeScreenProps {
   onOpenRecentFile: (path: string) => void;
   recentWorkspaces: RecentWorkspaceItem[];
   onOpenRecentWorkspace: (path: string) => void;
+  onClearStaleRecentFiles?: () => void;
 }
 
 export function WelcomeScreen({
@@ -25,6 +26,7 @@ export function WelcomeScreen({
   onOpenRecentFile,
   recentWorkspaces,
   onOpenRecentWorkspace,
+  onClearStaleRecentFiles,
 }: WelcomeScreenProps) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -94,15 +96,26 @@ export function WelcomeScreen({
               {recentFiles.map((item) => (
                 <li
                   key={item.path}
-                  className="welcome-recent-list__item"
-                  onClick={() => onOpenRecentFile(item.path)}
-                  title={item.path}
+                  className={`welcome-recent-list__item${item.stale ? " welcome-recent-list__item--stale" : ""}`}
+                  onClick={() => { if (!item.stale) onOpenRecentFile(item.path); }}
+                  title={item.stale ? `${item.path}（文件不存在）` : item.path}
                 >
-                  <span className="welcome-recent-list__name">{item.fileName}</span>
+                  <span className="welcome-recent-list__name">
+                    {item.fileName}
+                    {item.stale && <span className="welcome-recent-list__stale-badge">文件不存在</span>}
+                  </span>
                   <span className="welcome-recent-list__path">{item.path}</span>
                 </li>
               ))}
             </ul>
+          )}
+          {recentFiles.some((f) => f.stale) && onClearStaleRecentFiles && (
+            <button
+              className="welcome-recent-list__clear-stale"
+              onClick={onClearStaleRecentFiles}
+            >
+              清理失效记录
+            </button>
           )}
         </div>
       </div>

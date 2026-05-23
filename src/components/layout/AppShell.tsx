@@ -39,6 +39,8 @@ import {
   addRecentFile,
   removeRecentFile,
   updateRecentFilePath,
+  markRecentFileStale,
+  removeStaleRecentFiles,
   type RecentFileItem,
 } from "../../services/recent_files_service";
 import {
@@ -371,12 +373,22 @@ export function AppShell() {
           addToRecent(payload.path, payload.file_name);
         } catch (err) {
           alert(`打开文件失败: ${err instanceof Error ? err.message : String(err)}`);
-          setRecentFiles((prev) => removeRecentFile(prev, filePath));
+          // 文件不存在时标记为 stale 而非直接移除
+          const isNotFound =
+            (err as any)?.code === "FILE_NOT_FOUND" ||
+            /(not found|文件不存在|no such file)/i.test(err instanceof Error ? err.message : String(err));
+          if (isNotFound) {
+            setRecentFiles((prev) => markRecentFileStale(prev, filePath));
+          }
         }
       });
     },
     [confirmBeforeLosingChanges, addToRecent],
   );
+
+  const handleClearStaleRecentFiles = useCallback(() => {
+    setRecentFiles((prev) => removeStaleRecentFiles(prev));
+  }, []);
 
   // ── 工作区 ────────────────────────────────────
 
@@ -689,6 +701,7 @@ export function AppShell() {
           onOpenRecentFile={handleOpenRecentFile}
           recentWorkspaces={recentWorkspaces}
           onOpenRecentWorkspace={handleOpenRecentWorkspace}
+          onClearStaleRecentFiles={handleClearStaleRecentFiles}
         />
       ) : (
         <div className={`app-shell ${!isSidebarVisible ? "app-shell--sidebar-hidden" : ""} ${isFocusMode ? "app-shell--focus" : ""}`}>

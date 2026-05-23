@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "Shadow Markdown Editor",
+        "label": "main",
         "width": 1200,
         "height": 800,
         "dragDropEnabled": false

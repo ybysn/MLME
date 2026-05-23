@@ -10,6 +10,10 @@ export interface ConfirmDialogProps {
   onClose: () => void;
   onSaveAndContinue: () => void;
   onDiscardAndContinue: () => void;
+  message?: string;
+  saveLabel?: string;
+  discardLabel?: string;
+  cancelLabel?: string;
 }
 
 export function ConfirmDialog({
@@ -17,6 +21,10 @@ export function ConfirmDialog({
   onClose,
   onSaveAndContinue,
   onDiscardAndContinue,
+  message,
+  saveLabel,
+  discardLabel,
+  cancelLabel,
 }: ConfirmDialogProps) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -40,26 +48,26 @@ export function ConfirmDialog({
     <div className="confirm-overlay" onClick={onClose}>
       <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
         <p className="confirm-dialog__message">
-          当前文档有未保存修改，是否继续？未保存内容将丢失。
+          {message ?? "当前文档有未保存修改，是否继续？未保存内容将丢失。"}
         </p>
         <div className="confirm-dialog__actions">
           <button
             className="confirm-dialog__btn confirm-dialog__btn--primary"
             onClick={onSaveAndContinue}
           >
-            保存并继续
+            {saveLabel ?? "保存并继续"}
           </button>
           <button
             className="confirm-dialog__btn"
             onClick={onDiscardAndContinue}
           >
-            不保存继续
+            {discardLabel ?? "不保存继续"}
           </button>
           <button
             className="confirm-dialog__btn"
             onClick={onClose}
           >
-            取消
+            {cancelLabel ?? "取消"}
           </button>
         </div>
       </div>

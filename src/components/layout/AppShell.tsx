@@ -6,6 +6,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { SidebarPanel } from "./SidebarPanel";
 import { ConfirmDialog } from "../dialogs/ConfirmDialog";
+import { useWindowCloseGuard } from "../../app/use_window_close_guard";
 import { SettingsPanel } from "../settings/SettingsPanel";
 import {
   EditorPanel,
@@ -440,6 +441,13 @@ export function AppShell() {
     }
   }, [doc.content, doc.fileName, addToRecent]);
 
+  // ── 窗口关闭未保存确认 ──────────────────────
+  const { closeGuardDialog } = useWindowCloseGuard({
+    isDirty: doc.isDirty,
+    doSave,
+    autoSaveStatus,
+  });
+
   // ── 渲染 ──────────────────────────────────────
 
   return (
@@ -452,6 +460,8 @@ export function AppShell() {
           onDiscardAndContinue={handleDiscardAndContinue}
         />
       )}
+
+      {closeGuardDialog}
 
       <SettingsPanel
         open={settingsOpen}

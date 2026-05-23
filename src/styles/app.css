@@ -572,6 +572,37 @@ body {
   z-index: 10;
 }
 
+/* 写作模式拖拽高亮 */
+.typora-editor--drag-over {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
+  background-color: rgba(74, 124, 247, 0.04);
+  position: relative;
+}
+
+.typora-editor--drag-over::after {
+  content: "释放图片以插入";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-accent);
+  background-color: rgba(74, 124, 247, 0.06);
+  pointer-events: none;
+  z-index: 20;
+}
+
+[data-theme="dark"] .typora-editor--drag-over {
+  background-color: rgba(106, 140, 255, 0.06);
+}
+
+[data-theme="dark"] .typora-editor--drag-over::after {
+  background-color: rgba(106, 140, 255, 0.08);
+}
+
 /* 预览查找高亮 */
 .preview-find-match {
   background: rgba(255, 214, 102, 0.55);

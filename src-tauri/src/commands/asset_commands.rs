@@ -29,7 +29,8 @@ pub struct ImageAssetPayload {
 /// 支持的图片扩展名列表。
 /// 不支持 tif/tiff：WebView 预览兼容性不稳定。
 const IMAGE_EXTENSIONS: &[&str] = &[
-    "png", "jpg", "jpeg", "gif", "webp", "svg",
+    "png", "jpg", "jpeg", "jfif", "jpe",
+    "gif", "webp", "svg",
     "bmp", "ico", "avif",
 ];
 
@@ -183,7 +184,7 @@ pub fn save_image_asset(
 fn extension_to_mime(ext: &str) -> &str {
     match ext.to_lowercase().as_str() {
         "png" => "image/png",
-        "jpg" | "jpeg" => "image/jpeg",
+        "jpg" | "jpeg" | "jfif" | "jpe" => "image/jpeg",
         "gif" => "image/gif",
         "webp" => "image/webp",
         "svg" => "image/svg+xml",

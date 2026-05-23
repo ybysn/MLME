@@ -30,6 +30,7 @@ import { saveImageAsset } from "../../services/asset_service";
 import { createLogger } from "../../services/logger";
 import { FindReplaceBar } from "./FindReplaceBar";
 import { TyporaEditorPanel } from "./TyporaEditorPanel";
+import type { TyporaEditorPanelHandle } from "./TyporaEditorPanel";
 import {
   findMatches,
   replaceCurrentMatch,
@@ -45,6 +46,7 @@ export type ViewMode = "wysiwyg" | "source" | "split";
 const IMAGE_MIME_TYPES = new Set([
   "image/png",
   "image/jpeg",
+  "image/pjpeg",
   "image/gif",
   "image/webp",
   "image/svg+xml",
@@ -55,7 +57,7 @@ const IMAGE_MIME_TYPES = new Set([
 ]);
 
 /** MIME 类型回退——根据扩展名判断 */
-const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"]);
+const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "jfif", "jpe", "gif", "webp", "svg", "bmp", "ico", "avif"]);
 
 function isImageFile(file: File): boolean {
   if (file.type && IMAGE_MIME_TYPES.has(file.type)) return true;
@@ -190,6 +192,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       return () => document.removeEventListener("mousedown", handler);
     }, [exportMenuOpen]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const typoraEditorRef = useRef<TyporaEditorPanelHandle>(null);
     const pendingSelectionRef = useRef<PendingSelection | null>(null);
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -513,12 +516,16 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
-          handleInsertImageFiles(Array.from(files));
+          if (viewMode === "wysiwyg") {
+            void typoraEditorRef.current?.insertImageFiles(Array.from(files), "button");
+          } else {
+            handleInsertImageFiles(Array.from(files));
+          }
         }
         // 清空 input 使重复选择同一文件也能触发 change
         e.target.value = "";
       },
-      [handleInsertImageFiles],
+      [viewMode, handleInsertImageFiles],
     );
 
     // ── 图片拖拽 ────────────────────────────────
@@ -729,9 +736,10 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
               <span className="editor-toolbar__sep" />
               <button className="editor-toolbar__btn" title="代码块" onClick={() => applyCommand(insertCodeBlock)}>{"{ }"}</button>
               <button className="editor-toolbar__btn" title="链接" onClick={() => applyCommand(insertLink)}>&#128279;</button>
-              <button className="editor-toolbar__btn" title="插入图片" onClick={handleImageButtonClick}>&#128247;</button>
             </>
           )}
+
+          <button className="editor-toolbar__btn" title="插入图片" onClick={handleImageButtonClick}>&#128247;</button>
 
           <span className="editor-toolbar__spacer" />
 
@@ -856,12 +864,14 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         {viewMode === "wysiwyg" && (
           <div className="panel__body panel__body--editor-editing">
             <TyporaEditorPanel
+              ref={typoraEditorRef}
               content={content}
               currentPath={currentPath}
               fontFamily={editorFontFamily}
               fontSize={editorFontSize}
               onChange={onContentChange}
               scrollToHeadingText={outlineScrollTarget}
+              onStatusMessage={showStatus}
             />
           </div>
         )}

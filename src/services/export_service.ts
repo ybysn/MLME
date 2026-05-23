@@ -88,6 +88,12 @@ em { font-style: italic; }
 .hljs-regexp { color: #22863a; }
 .hljs-selector-class, .hljs-selector-pseudo { color: #6f42c1; }
 .hljs-tag { color: #22863a; }
+
+/* KaTeX 数学公式 */
+.katex { font-size: 1.1em; }
+.katex-display { display: block; margin: 1em 0; text-align: center; }
+.katex-display > .katex { display: inline-block; white-space: nowrap; max-width: 100%; overflow-x: auto; }
+.katex-html { display: none; }
 `.trim();
 
 export async function exportMarkdownToHtml(
@@ -182,6 +188,12 @@ ul, ol { padding-left: 1.5em; }
 .hljs-regexp { color: #166534; }
 .hljs-selector-class, .hljs-selector-pseudo { color: #5b21b6; }
 .hljs-tag { color: #166534; }
+
+/* KaTeX 数学公式 */
+.katex { font-size: 1.1em; }
+.katex-display { display: block; margin: 1em 0; text-align: center; }
+.katex-display > .katex { display: inline-block; white-space: nowrap; max-width: 100%; overflow-x: auto; }
+.katex-html { display: none; }
 `.trim();
 
 export async function buildPrintableHtml(

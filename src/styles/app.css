@@ -856,6 +856,10 @@ body {
 [data-theme="dark"] .hljs-subst { color: #e8e8f0; }
 [data-theme="dark"] .hljs-tag { color: #7ee787; }
 
+/* ===== KaTeX 深色主题适配 ===== */
+[data-theme="dark"] .katex { color: #e8e8f0; }
+[data-theme="dark"] .katex .mord { color: #e8e8f0; }
+
 .markdown-preview table {
   width: 100%;
   margin: 0.75em 0;

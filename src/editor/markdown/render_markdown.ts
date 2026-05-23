@@ -1,13 +1,16 @@
 /**
- * 模块职责：将 Markdown 文本渲染为 HTML，基于 markdown-it + highlight.js。
+ * 模块职责：将 Markdown 文本渲染为 HTML，基于 markdown-it + highlight.js + KaTeX。
  * 输入：Markdown 原始文本、可选 currentPath、可选 imageSrcMap。
  * 输出：HTML 字符串。
  * 图片路径转换：优先使用 imageSrcMap 中的 data URL，回退 convertFileSrc。
  * 代码高亮：有语言标记时使用 highlight.js，无语言时不自动检测。
+ * 数学公式：$...$ 行内 / $$...$$ 块级，由 markdown-it-katex 处理。
  */
 import MarkdownIt from "markdown-it";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import hljs from "highlight.js";
+import mk from "markdown-it-katex";
+import "katex/dist/katex.min.css";
 import {
   safeDecodeMarkdownImageSrc,
   normalizeMarkdownImageSrc,
@@ -18,6 +21,9 @@ const md = new MarkdownIt({
   linkify: true,
   breaks: true,
 });
+
+// ── KaTeX 数学公式 ──
+md.use(mk, { throwOnError: false, errorColor: "#d73a49" });
 
 const defaultImageRenderer = md.renderer.rules.image!.bind(md.renderer);
 

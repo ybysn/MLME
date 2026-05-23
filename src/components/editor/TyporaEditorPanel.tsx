@@ -21,6 +21,7 @@ import {
 import { Crepe } from "@milkdown/crepe";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/nord.css";
+import "katex/dist/katex.min.css";
 import { editorViewCtx } from "@milkdown/kit/core";
 import {
   normalizeMarkdownImageSources,

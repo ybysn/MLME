@@ -563,3 +563,43 @@
 [data-theme="dark"] .typora-editor {
   background-color: #1e1e2e;
 }
+
+/* 浅色模式代码块：白底黑字 */
+.typora-editor .milkdown .milkdown-code-block {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.typora-editor .milkdown .milkdown-code-block .cm-editor {
+  background: #ffffff;
+}
+
+.typora-editor .milkdown .milkdown-code-block .cm-content {
+  color: #111827;
+}
+
+.typora-editor .milkdown .milkdown-code-block .cm-line {
+  color: #111827;
+}
+
+/* 浅色模式代码块行号区 */
+.typora-editor .milkdown .milkdown-code-block .cm-gutters {
+  background: #f9fafb;
+  color: #6b7280;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* 代码块内选中文本：浅灰背景 */
+.typora-editor .milkdown .milkdown-code-block .cm-selectionBackground,
+.typora-editor .milkdown .milkdown-code-block .cm-content ::selection {
+  background: #d1d5db !important;
+  color: #111827;
+}
+
+/* 深色模式代码块选中文本 */
+[data-theme="dark"] .typora-editor .milkdown .milkdown-code-block .cm-selectionBackground,
+[data-theme="dark"] .typora-editor .milkdown .milkdown-code-block .cm-content ::selection {
+  background: #4b5563 !important;
+  color: #f9fafb;
+}

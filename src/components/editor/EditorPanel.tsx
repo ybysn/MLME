@@ -92,8 +92,7 @@ const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
 const FONT_OPTIONS: { label: string; value: string }[] = [
   { label: "系统默认", value: "Consolas, 'Microsoft YaHei', monospace" },
   { label: "Consolas", value: "Consolas, monospace" },
-  { label: "Microsoft YaHei", value: "'Microsoft YaHei', sans-serif" },
-  { label: "微软雅黑", value: "微软雅黑, 'Microsoft YaHei', sans-serif" },
+  { label: "微软雅黑 (Microsoft YaHei)", value: "'Microsoft YaHei', '微软雅黑', sans-serif" },
   { label: "宋体", value: "宋体, SimSun, serif" },
   { label: "黑体", value: "黑体, SimHei, sans-serif" },
   { label: "楷体", value: "楷体, KaiTi, serif" },

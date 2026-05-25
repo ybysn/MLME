@@ -25,11 +25,8 @@ import { FindReplaceBar } from "./FindReplaceBar";
 import { TyporaEditorPanel } from "./TyporaEditorPanel";
 import { EditorToolbar } from "./EditorToolbar";
 import { useFindReplace } from "./useFindReplace";
+import { useImageInsert } from "./useImageInsert";
 import type { TyporaEditorPanelHandle } from "./TyporaEditorPanel";
-import {
-  importImageFilesForMarkdown,
-} from "../../editor/image/image_asset_workflow";
-import { isImageFile, ALLOWED_IMAGE_FORMATS_STRING } from "../../editor/image/image_validation";
 
 const logger = createLogger("EditorPanel");
 
@@ -113,7 +110,6 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     const [outlineScrollTarget, setOutlineScrollTarget] = useState<string | null>(null);
     const openEditableStartRef = useRef<number | null>(null);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const typoraEditorRef = useRef<TyporaEditorPanelHandle>(null);
 
     // ── 查找替换（通过 hook 封装） ──
@@ -129,6 +125,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       handleFindNext, handleFindPrev, handleReplaceCurrent, handleReplaceAll } = findReplace;
 
     const pendingSelectionRef = useRef<PendingSelection | null>(null);
+
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -173,6 +170,21 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
       statusTimerRef.current = setTimeout(() => setStatusMessage(null), 3000);
     }, []);
+
+    // ── 图片插入（通过 hook 封装） ──
+    const imageInsert = useImageInsert({
+      content,
+      currentPath,
+      viewMode,
+      textareaRef,
+      typoraEditorRef,
+      onContentChange,
+      showStatus,
+      pendingSelectionRef,
+    });
+    const { isDragOver, fileInputRef,
+      handleImageButtonClick, handleFileInputChange,
+      handleDragOver, handleDragLeave, handleDrop, handlePaste } = imageInsert;
 
     // 内容变化后恢复光标位置
     useEffect(() => {
@@ -291,150 +303,6 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         onContentChange(result.content);
       },
       [onContentChange],
-    );
-
-    // ── 统一图片插入流程 ──────────────────────
-
-    /**
-      * 源码/分屏模式下图片文件插入：复用统一导入工作流。
-      */
-    const handleInsertImageFiles = useCallback(
-      async (files: File[]) => {
-        if (!currentPath) {
-          showStatus("请先保存 Markdown 文件，再插入图片");
-          return;
-        }
-
-        const { results, errors } = await importImageFilesForMarkdown({
-          files,
-          markdownPath: currentPath,
-        });
-
-        if (results.length === 0) {
-          if (errors.length > 0) {
-            showStatus(errors[0].message);
-          } else {
-            showStatus(`仅支持图片文件 (${ALLOWED_IMAGE_FORMATS_STRING})`);
-          }
-          return;
-        }
-
-        const textarea = textareaRef.current;
-        const cursorPos = textarea?.selectionStart ?? content.length;
-
-        let newContent = content;
-        if (cursorPos > 0 && content[cursorPos - 1] !== "\n") {
-          newContent = newContent.slice(0, cursorPos) + "\n" + newContent.slice(cursorPos);
-        }
-        let offset = cursorPos > 0 && content[cursorPos - 1] !== "\n" ? 1 : 0;
-
-        for (const r of results) {
-          const mdImage = `![${r.fileName}](${r.relativePath})\n`;
-          const insertPos = cursorPos + offset;
-          newContent = newContent.slice(0, insertPos) + mdImage + newContent.slice(insertPos);
-          offset += mdImage.length;
-        }
-
-        pendingSelectionRef.current = { start: cursorPos + offset, end: cursorPos + offset };
-        onContentChange(newContent);
-
-        if (errors.length > 0) {
-          showStatus(`已插入 ${results.length} 张，${errors.length} 张失败`);
-        } else if (results.length === 1) {
-          showStatus("已插入 1 张图片");
-        } else {
-          showStatus(`已插入 ${results.length} 张图片`);
-        }
-      },
-      [content, currentPath, onContentChange, showStatus],
-    );
-
-    // ── 工具栏图片按钮：触发隐藏 input ──────────
-
-    const handleImageButtonClick = useCallback(() => {
-      fileInputRef.current?.click();
-    }, []);
-
-    const handleFileInputChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-          if (viewMode === "wysiwyg") {
-            void typoraEditorRef.current?.insertImageFiles(Array.from(files), "button");
-          } else {
-            handleInsertImageFiles(Array.from(files));
-          }
-        }
-        // 清空 input 使重复选择同一文件也能触发 change
-        e.target.value = "";
-      },
-      [viewMode, handleInsertImageFiles],
-    );
-
-    // ── 图片拖拽 ────────────────────────────────
-
-    const [isDragOver, setIsDragOver] = useState(false);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-      if (!e.dataTransfer.types.includes("Files")) return;
-
-      const hasImageFile = Array.from(e.dataTransfer.files).some(isImageFile);
-      if (!hasImageFile) return;
-
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "copy";
-      setIsDragOver(true);
-    }, []);
-
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-      setIsDragOver(false);
-    }, []);
-
-    const handleDrop = useCallback(
-      async (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-
-        const files = e.dataTransfer.files;
-        if (files.length === 0) return;
-
-        await handleInsertImageFiles(Array.from(files));
-      },
-      [handleInsertImageFiles],
-    );
-
-    // ── 粘贴图片 ────────────────────────────────
-
-    const handlePaste = useCallback(
-      (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-        const items = e.clipboardData.items;
-        const imageItems: DataTransferItem[] = [];
-
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].type.startsWith("image/")) {
-            imageItems.push(items[i]);
-          }
-        }
-
-        if (imageItems.length === 0) return; // 无图片，走默认文本粘贴
-
-        e.preventDefault();
-
-        if (!currentPath) {
-          showStatus("请先保存 Markdown 文件，再粘贴图片");
-          return;
-        }
-
-        const files = imageItems
-          .map((item) => item.getAsFile())
-          .filter((f): f is File => f !== null);
-
-        if (files.length > 0) {
-          handleInsertImageFiles(files);
-        }
-      },
-      [currentPath, handleInsertImageFiles, showStatus],
     );
 
     // ── 键盘快捷键 ────────────────────────────

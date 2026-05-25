@@ -71,23 +71,19 @@ export interface EditorPanelProps {
   isFocusMode?: boolean;
   onToggleFocus?: () => void;
   onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 export interface EditorPanelHandle {
   scrollToLine: (line: number) => void;
   scrollToHeadingText: (text: string) => void;
+  setViewMode: (mode: ViewMode) => void;
 }
 
 interface PendingSelection {
   start: number;
   end: number;
 }
-
-const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
-  { value: "wysiwyg", label: "写作模式" },
-  { value: "source", label: "源码视图" },
-  { value: "split", label: "分屏" },
-];
 
 const FONT_OPTIONS: { label: string; value: string }[] = [
   { label: "系统默认", value: "Consolas, 'Microsoft YaHei', monospace" },
@@ -146,13 +142,18 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       isFocusMode = false,
       onToggleFocus,
       onToggleFullscreen,
+      isFullscreen = false,
     },
     ref,
   ) {
     const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
+    const [viewMenuOpen, setViewMenuOpen] = useState(false);
+    const [insertMenuOpen, setInsertMenuOpen] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const exportMenuRef = useRef<HTMLDivElement>(null);
+    const viewMenuRef = useRef<HTMLDivElement>(null);
+    const insertMenuRef = useRef<HTMLDivElement>(null);
 
     // ── 查找替换状态 ────────────────────────────
     const [findQuery, setFindQuery] = useState("");
@@ -176,6 +177,30 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
       document.addEventListener("mousedown", handler);
       return () => document.removeEventListener("mousedown", handler);
     }, [exportMenuOpen]);
+
+    // 点击外部关闭视图菜单
+    useEffect(() => {
+      if (!viewMenuOpen) return;
+      const handler = (e: MouseEvent) => {
+        if (viewMenuRef.current && !viewMenuRef.current.contains(e.target as Node)) {
+          setViewMenuOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }, [viewMenuOpen]);
+
+    // 点击外部关闭插入菜单
+    useEffect(() => {
+      if (!insertMenuOpen) return;
+      const handler = (e: MouseEvent) => {
+        if (insertMenuRef.current && !insertMenuRef.current.contains(e.target as Node)) {
+          setInsertMenuOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }, [insertMenuOpen]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const typoraEditorRef = useRef<TyporaEditorPanelHandle>(null);
     const pendingSelectionRef = useRef<PendingSelection | null>(null);
@@ -296,6 +321,9 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         setOutlineScrollTarget(text);
         // 清除以便后续重复点击同一标题也能触发
         setTimeout(() => setOutlineScrollTarget(null), 200);
+      },
+      setViewMode(mode: ViewMode) {
+        setViewMode(mode);
       },
     }));
 
@@ -783,8 +811,6 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
             </>
           )}
 
-          <button className="editor-toolbar__btn" title="插入图片" onClick={handleImageButtonClick}>&#128247;</button>
-
           <span className="editor-toolbar__spacer" />
 
           <select
@@ -813,51 +839,87 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
             ))}
           </select>
 
-          {/* 视图模式切换 */}
+          {/* 插入菜单 */}
           <span className="editor-toolbar__sep" />
-          <div className="editor-toolbar__modes">
-            {VIEW_MODE_OPTIONS.filter((opt) => opt.value !== "source").map((opt) => (
-              <button
-                key={opt.value}
-                className={`editor-toolbar__mode-btn ${viewMode === opt.value ? "editor-toolbar__mode-btn--active" : ""}`}
-                onClick={() => setViewMode(opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="editor-insert-menu" ref={insertMenuRef}>
+            <button
+              className="editor-toolbar__btn"
+              title="插入"
+              onClick={() => setInsertMenuOpen((p) => !p)}
+            >
+              插入 &#9660;
+            </button>
+            {insertMenuOpen && (
+              <div className="editor-insert-menu__dropdown">
+                <button
+                  className="editor-insert-menu__item"
+                  onClick={() => { handleImageButtonClick(); setInsertMenuOpen(false); }}
+                >
+                  <span>图片</span>
+                </button>
+              </div>
+            )}
           </div>
-          <button
-            className={`editor-toolbar__btn ${viewMode === "source" ? "editor-toolbar__mode-btn--active" : ""}`}
-            title="Markdown 源码视图（高级）"
-            onClick={() => setViewMode("source")}
-          >
-            源码
-          </button>
 
+          {/* 视图菜单 */}
           <span className="editor-toolbar__sep" />
-          {onToggleFocus && (
+          <div className="editor-view-menu" ref={viewMenuRef}>
             <button
               className="editor-toolbar__btn"
-              title="专注模式 (Ctrl+Shift+F)"
-              onClick={onToggleFocus}
+              title="视图"
+              onClick={() => setViewMenuOpen((p) => !p)}
             >
-              {isFocusMode ? "\u2714 专注" : "\u25A2 专注"}
+              视图 &#9660;
             </button>
-          )}
-          {onToggleFullscreen && (
-            <button
-              className="editor-toolbar__btn"
-              title="全屏 (F11)"
-              onClick={onToggleFullscreen}
-            >
-              {"\u26F6 全屏"}
-            </button>
-          )}
+            {viewMenuOpen && (
+              <div className="editor-view-menu__dropdown">
+                <button
+                  className={`editor-view-menu__item ${viewMode === "wysiwyg" ? "editor-view-menu__item--active" : ""}`}
+                  onClick={() => { setViewMode("wysiwyg"); setViewMenuOpen(false); }}
+                >
+                  <span>写作模式</span>
+                  <span className="editor-view-menu__shortcut">Ctrl+Alt+1</span>
+                </button>
+                <button
+                  className={`editor-view-menu__item ${viewMode === "split" ? "editor-view-menu__item--active" : ""}`}
+                  onClick={() => { setViewMode("split"); setViewMenuOpen(false); }}
+                >
+                  <span>分屏</span>
+                  <span className="editor-view-menu__shortcut">Ctrl+Alt+2</span>
+                </button>
+                <button
+                  className={`editor-view-menu__item ${viewMode === "source" ? "editor-view-menu__item--active" : ""}`}
+                  onClick={() => { setViewMode("source"); setViewMenuOpen(false); }}
+                >
+                  <span>源码视图</span>
+                  <span className="editor-view-menu__shortcut">Ctrl+Alt+3</span>
+                </button>
+                <div className="editor-view-menu__sep" />
+                {onToggleFocus && (
+                  <button
+                    className={`editor-view-menu__item ${isFocusMode ? "editor-view-menu__item--active" : ""}`}
+                    onClick={() => { onToggleFocus(); setViewMenuOpen(false); }}
+                  >
+                    <span>专注模式</span>
+                    <span className="editor-view-menu__shortcut">Ctrl+Alt+F</span>
+                  </button>
+                )}
+                {onToggleFullscreen && (
+                  <button
+                    className={`editor-view-menu__item ${isFullscreen ? "editor-view-menu__item--active" : ""}`}
+                    onClick={() => { onToggleFullscreen(); setViewMenuOpen(false); }}
+                  >
+                    <span>全屏</span>
+                    <span className="editor-view-menu__shortcut">F11</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
-          {!isFocusMode && (
-            <>
-              <span className="editor-toolbar__sep" />
-              <div className="editor-export-menu" ref={exportMenuRef}>
+          {/* 导出菜单 */}
+          <span className="editor-toolbar__sep" />
+          <div className="editor-export-menu" ref={exportMenuRef}>
             <button
               className="editor-toolbar__btn"
               title="导出"
@@ -879,16 +941,16 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
                 >
                   导出 PDF
                 </button>
+                <button
+                  className="editor-export-menu__item"
+                  onClick={() => { setExportMenuOpen(false); onPrint(); }}
+                >
+                  打印
+                </button>
               </div>
             )}
           </div>
-          <button
-            className="editor-toolbar__btn"
-            title="打印"
-            onClick={onPrint}
-          >
-            打印
-          </button>
+
           <button
             className="editor-toolbar__btn"
             title="设置"
@@ -896,8 +958,6 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           >
             &#9881;
           </button>
-            </>
-          )}
         </div>
 
         {/* 状态消息 */}

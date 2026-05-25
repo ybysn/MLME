@@ -184,10 +184,12 @@ export function AppShell() {
         return;
       }
 
-      if (e.ctrlKey && e.shiftKey && e.key === "F") {
-        e.preventDefault();
-        toggleFocusMode();
-        return;
+      if (e.ctrlKey && e.altKey) {
+        const k = e.key.toLowerCase();
+        if (k === "1") { e.preventDefault(); editorRef.current?.setViewMode("wysiwyg"); return; }
+        if (k === "2") { e.preventDefault(); editorRef.current?.setViewMode("split"); return; }
+        if (k === "3") { e.preventDefault(); editorRef.current?.setViewMode("source"); return; }
+        if (k === "f") { e.preventDefault(); toggleFocusMode(); return; }
       }
 
       if (e.key === "Escape") {
@@ -793,6 +795,7 @@ export function AppShell() {
               isFocusMode={isFocusMode}
               onToggleFocus={toggleFocusMode}
               onToggleFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
               onExportHtml={handleExportHtml}
               onExportPdf={handleExportPdf}
               onPrint={handlePrint}

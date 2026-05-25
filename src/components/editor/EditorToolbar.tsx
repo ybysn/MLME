@@ -38,6 +38,8 @@ export interface EditorToolbarProps {
   applyCommand: (cmd: (content: string, start: number, end: number, ...args: any[]) => EditCommandResult, ...args: any[]) => void;
   onImageButtonClick: () => void;
   currentTheme?: string;
+  selectedHeadingLevel?: number;
+  onHeadingChange?: (level: number) => void;
 }
 
 const FONT_OPTIONS: { label: string; value: string }[] = [
@@ -66,7 +68,6 @@ const HEADING_OPTIONS: { label: string; level: number }[] = [
   { label: "H3", level: 3 },
   { label: "H4", level: 4 },
   { label: "H5", level: 5 },
-  { label: "H6", level: 6 },
 ];
 
 export function EditorToolbar({
@@ -88,6 +89,8 @@ export function EditorToolbar({
   applyCommand,
   onImageButtonClick,
   currentTheme = "light",
+  selectedHeadingLevel = 0,
+  onHeadingChange,
 }: EditorToolbarProps) {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
@@ -133,16 +136,15 @@ export function EditorToolbar({
     <div className="editor-toolbar">
       <button className="editor-toolbar__btn" title="切换侧边栏 (Ctrl+\)" onClick={onToggleSidebar}>&#9776;</button>
       <span className="editor-toolbar__sep" />
-      <select className="editor-toolbar__select editor-toolbar__select--heading" title="标题级别" onChange={(e) => {
+      <select className="editor-toolbar__select editor-toolbar__select--heading" title="标题级别" value={selectedHeadingLevel} onChange={(e) => {
         const level = Number(e.target.value);
         if (viewMode === "wysiwyg") {
           typoraEditorRef.current?.setHeadingLevel(level);
         } else {
           applyCommand(setHeadingLevel, level);
         }
-        e.target.value = "";
-      }} defaultValue="">
-        <option value="" disabled>标题</option>
+        onHeadingChange?.(level);
+      }}>
         {HEADING_OPTIONS.map((opt) => (<option key={opt.level} value={opt.level}>{opt.label}</option>))}
       </select>
       <span className="editor-toolbar__sep" />

@@ -107,6 +107,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
     ref,
   ) {
     const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
+    const [selectedHeadingLevel, setSelectedHeadingLevel] = useState(0);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const [outlineScrollTarget, setOutlineScrollTarget] = useState<string | null>(null);
@@ -440,6 +441,8 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           applyCommand={applyCommand}
           onImageButtonClick={handleImageButtonClick}
           currentTheme={currentTheme}
+          selectedHeadingLevel={selectedHeadingLevel}
+          onHeadingChange={setSelectedHeadingLevel}
         />
 
         {/* 状态消息 */}

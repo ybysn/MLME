@@ -26,6 +26,7 @@ import "@milkdown/crepe/theme/nord.css";
 import "katex/dist/katex.min.css";
 import { commandsCtx, editorViewCtx } from "@milkdown/kit/core";
 import { wrapInHeadingCommand } from "@milkdown/kit/preset/commonmark";
+import { undoCommand, redoCommand } from "@milkdown/kit/plugin/history";
 import {
   normalizeMarkdownImageSources,
   detectUnsafeImageSources,
@@ -68,6 +69,10 @@ export interface TyporaEditorPanelHandle {
   refreshContent: (newContent: string) => void;
   /** 设置当前块的标题级别（0=段落, 1-6=H1-H6） */
   setHeadingLevel: (level: number) => void;
+  /** 撤销 */
+  undo: () => void;
+  /** 重做 */
+  redo: () => void;
 }
 
 export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEditorPanelProps>(
@@ -363,6 +368,34 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       }
     }, []);
 
+    /** 撤销 */
+    const undo = useCallback(() => {
+      const crepe = crepeRef.current;
+      if (!crepe) return;
+      try {
+        crepe.editor.action((ctx) => {
+          const commands = ctx.get(commandsCtx);
+          commands.call(undoCommand.key);
+        });
+      } catch (err) {
+        console.warn("[TyporaEditor] undo failed", err);
+      }
+    }, []);
+
+    /** 重做 */
+    const redo = useCallback(() => {
+      const crepe = crepeRef.current;
+      if (!crepe) return;
+      try {
+        crepe.editor.action((ctx) => {
+          const commands = ctx.get(commandsCtx);
+          commands.call(redoCommand.key);
+        });
+      } catch (err) {
+        console.warn("[TyporaEditor] redo failed", err);
+      }
+    }, []);
+
     // ── MutationObserver（图片自动 patch） ──
     useEffect(() => {
       const container = containerRef.current;
@@ -405,7 +438,9 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       getSelectedText,
       refreshContent,
       setHeadingLevel,
-    }), [insertImageFiles, updateWritingFind, scrollToWritingFindMatch, getWritingFindMatchCount, getSelectedText, refreshContent, setHeadingLevel]);
+      undo,
+      redo,
+    }), [insertImageFiles, updateWritingFind, scrollToWritingFindMatch, getWritingFindMatchCount, getSelectedText, refreshContent, setHeadingLevel, undo, redo]);
 
     // ── 原生 capture-phase 拖拽 ──
     useEffect(() => {

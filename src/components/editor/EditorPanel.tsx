@@ -115,6 +115,24 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
     const typoraEditorRef = useRef<TyporaEditorPanelHandle>(null);
 
+    // ── 撤销/重做栈（源码模式） ──
+    const undoStackRef = useRef<string[]>([]);
+    const redoStackRef = useRef<string[]>([]);
+    const skipUndoPushRef = useRef(false);
+    // 每次 content 变化时推入 undo 栈（排除由 undo/redo 自身触发的变更）
+    useEffect(() => {
+      if (skipUndoPushRef.current) {
+        skipUndoPushRef.current = false;
+        return;
+      }
+      const stack = undoStackRef.current;
+      if (stack.length === 0 || stack[stack.length - 1] !== content) {
+        stack.push(content);
+        if (stack.length > 200) stack.shift();
+        redoStackRef.current = [];
+      }
+    }, [content]);
+
     // ── 查找替换（通过 hook 封装） ──
     const findReplace = useFindReplace({
       content,
@@ -310,6 +328,25 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
     // ── 键盘快捷键 ────────────────────────────
 
+    const handleSourceUndo = useCallback(() => {
+      const stack = undoStackRef.current;
+      if (stack.length <= 1) return;
+      const current = stack.pop()!;
+      redoStackRef.current.push(current);
+      const prev = stack[stack.length - 1];
+      skipUndoPushRef.current = true;
+      onContentChange(prev);
+    }, [onContentChange]);
+
+    const handleSourceRedo = useCallback(() => {
+      const redoStack = redoStackRef.current;
+      if (redoStack.length === 0) return;
+      const next = redoStack.pop()!;
+      undoStackRef.current.push(next);
+      skipUndoPushRef.current = true;
+      onContentChange(next);
+    }, [onContentChange]);
+
     const handleEditKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         // 跳过 IME 组合输入
@@ -346,6 +383,19 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           case "\\":
             e.preventDefault();
             onToggleSidebar();
+            break;
+          case "z":
+            if (e.shiftKey) {
+              e.preventDefault();
+              handleSourceRedo();
+            } else {
+              e.preventDefault();
+              handleSourceUndo();
+            }
+            break;
+          case "y":
+            e.preventDefault();
+            handleSourceRedo();
             break;
         }
       },

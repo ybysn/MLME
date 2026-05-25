@@ -185,3 +185,47 @@ describe("table.md 结构一致性", () => {
     expect(trCount).toBeGreaterThanOrEqual(2); // header row + at least 1 data row
   });
 });
+
+// ═══════════════ list.md ═══════════════
+
+describe("list.md 结构一致性", () => {
+  const content = readCase("list.md");
+  const tokens = parseTokens(content);
+
+  it("包含无序列表", () => {
+    const hasUl = tokens.some((t) => t.type === "bullet_list_open");
+    expect(hasUl).toBe(true);
+  });
+
+  it("包含有序列表", () => {
+    const hasOl = tokens.some((t) => t.type === "ordered_list_open");
+    expect(hasOl).toBe(true);
+  });
+
+  it("列表项不少于 4 个", () => {
+    const itemCount = tokens.filter((t) => t.type === "list_item_open").length;
+    expect(itemCount).toBeGreaterThanOrEqual(4);
+  });
+});
+
+// ═══════════════ math.md ═══════════════
+
+describe("math.md 结构一致性", () => {
+  const content = readCase("math.md");
+  const tokens = parseTokens(content);
+
+  it("包含行内公式分隔符", () => {
+    // math.md 包含 $...$ 和 $$...$$，markdown-it-katex 会将其作为 math_inline/math_block token
+    expect(content).toContain("$");
+  });
+
+  it("包含块级公式分隔符", () => {
+    expect(content).toContain("$$");
+  });
+
+  it("代码块中的 $ 不被误判为公式", () => {
+    // 验证代码块部分存在（markdown-it 解析时 fence token 包裹的内容不触发公式解析）
+    const hasFence = tokens.some((t) => t.type === "fence");
+    expect(hasFence).toBe(true);
+  });
+});

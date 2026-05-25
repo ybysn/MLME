@@ -1,6 +1,6 @@
 # MarkdownEditor 工作进度汇报
 
-> 最后更新：2026-05-23
+> 最后更新：2026-05-26
 
 ---
 
@@ -75,7 +75,7 @@
 | 功能 | 说明 |
 |------|------|
 | 欢迎页响应式 | 小窗口支持滚动 + 按钮自动换行 |
-| 设置面板 | 字体/字号/主题/自动保存 可配置 |
+| 设置面板 | 字体/字号/主题/自动保存 可配置，全模式生效 |
 | 状态栏 | 保存状态 + 字数统计 |
 | AppDialog 通用弹窗 | Enter/Esc 键盘支持 |
 
@@ -87,6 +87,22 @@
 | `src/editor/markdown/image_source_extractor.ts` | Markdown 图片路径提取（仅依赖 markdown-it core） |
 | `src/components/dialogs/QuickOpenDialog.tsx` | Ctrl+P 快速打开弹窗 |
 | `src/components/dialogs/CommandPaletteDialog.tsx` | Ctrl+Shift+P 命令面板 |
+
+---
+
+## 🐛 Bug 修复
+
+| 日期 | 问题 | 修复方式 |
+|------|------|----------|
+| 2026-05-26 | 写作模式下字体/字号设置不生效 | CSS 自定义属性穿透 Milkdown Crepe 样式层 |
+
+**根因**：Milkdown Crepe 的 `reset.css` 在 `.milkdown` 和 `.ProseMirror` 内部硬编码了 `font-family` 和 `font-size`（高特异性）。即使 `TyporaEditorPanel` 容器 div 有 inline style，也被内层 CSS 规则覆盖。
+
+**修复**：
+1. `TyporaEditorPanel.tsx` — 容器 inline style 增加 `--crepe-font-default` / `--crepe-font-title` / `--editor-font-family` / `--editor-font-size` 四个 CSS 自定义属性
+2. `app.css` — 新增 `.typora-editor .milkdown .ProseMirror` 前缀覆盖规则（4-class 特异性 0-4-0 > Crepe 的 0-3-0），覆盖 p / li / blockquote / td / th / h1-h6 的字体和字号
+
+**影响范围**：仅写作模式（WYSIWYG）的字体渲染，不涉及源码模式、分屏模式、保存、导出、图片等。
 
 ---
 

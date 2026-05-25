@@ -1,0 +1,271 @@
+/* ===== 主布局 - 两栏 ===== */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.app-shell__sidebar {
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  height: 100%;
+  background-color: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.app-shell__main {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+/* 隐藏侧边栏时确保主区域占满 */
+.app-shell--sidebar-hidden .app-shell__main {
+  flex: 1;
+}
+
+/* ===== 专注模式 ===== */
+.app-shell--focus .app-shell__main {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.app-shell--focus .editor-toolbar {
+  background-color: var(--color-bg);
+  border-bottom-color: transparent;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.app-shell--focus .editor-toolbar__spacer {
+  flex: 0;
+}
+.app-shell--focus .status-bar {
+  background-color: var(--color-bg);
+  border-top-color: transparent;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.app-shell--focus .editor-textarea {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.app-shell--focus .typora-editor .milkdown .editor[contenteditable] {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.app-shell--focus .markdown-preview {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* ===== 侧边栏面板 ===== */
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sidebar-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-tertiary);
+}
+
+.sidebar-tabs__btn {
+  flex: 1;
+  padding: 8px var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.sidebar-tabs__btn:hover {
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+}
+
+.sidebar-tabs__btn--active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  background-color: var(--color-bg);
+}
+
+.sidebar-panel__content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar-panel__content .panel {
+  height: 100%;
+}
+
+/* ===== 面板通用 ===== */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel__header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.panel__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+.panel__body--editor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* ===== 文件树面板 ===== */
+.file-tree-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.file-tree-actions__btn {
+  flex: 1 1 calc(50% - var(--spacing-xs));
+  min-width: 0;
+  padding: 6px var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.file-tree-actions__btn:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-accent);
+}
+
+.file-tree-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+}
+
+.file-tree-file-info__name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tree-file-info__status {
+  font-size: var(--font-size-xs);
+}
+
+.file-tree-file-info__status--dirty {
+  color: #d97706;
+}
+
+.file-tree-file-info__status--clean {
+  color: var(--color-text-muted);
+}
+
+.file-tree-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.file-tree-section__title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-sm);
+  padding: 0 var(--spacing-xs);
+}
+
+.file-tree-section__placeholder {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  padding: var(--spacing-md);
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* 最近文件列表（侧栏） */
+.recent-file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recent-file-list__item {
+  padding: 4px var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.recent-file-list__item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.recent-file-list__item--active {
+  background-color: var(--color-bg-tertiary);
+}
+
+.recent-file-list__item--active .recent-file-list__name {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.recent-file-list__name {
+  display: block;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-file-list__path {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,68 @@
+/**
+ * 模块职责：全局样式，定义 CSS 变量、两栏布局、面板、Tab 和状态栏样式。
+ * 当前范围：基础重置、布局、面板组件外观、侧边栏 Tab、大纲列表。
+ * 后续扩展点：主题变量切换（明亮/暗黑）、编辑器内联样式、响应式调整。
+ */
+
+/* ===== 全局重置 ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* 基础色调 - 浅色主题 */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f5f6f8;
+  --color-bg-tertiary: #ebeef2;
+  --color-border: #d5d8dd;
+  --color-border-light: #e8eaef;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #4a4f5e;
+  --color-text-muted: #8a8fa0;
+  --color-accent: #4a7cf7;
+  --color-accent-hover: #3a6ae6;
+  --color-status-bar-bg: #f0f2f5;
+  --color-status-bar-text: #6a6f7e;
+
+  /* 布局尺寸 */
+  --sidebar-width: 300px;
+  --status-bar-height: 30px;
+
+  /* 字体 */
+  --font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui,
+    -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 13px;
+  --font-size-sm: 14px;
+  --font-size-base: 15px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+
+  /* 间距 */
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 14px;
+  --spacing-lg: 18px;
+  --spacing-xl: 24px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

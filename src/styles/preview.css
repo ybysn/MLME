@@ -1,0 +1,275 @@
+/* ===== 分屏布局 ===== */
+.panel__body--editor-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 0;
+}
+
+.editor-split__pane {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+.editor-split__divider {
+  width: 1px;
+  flex-shrink: 0;
+  background-color: var(--color-border);
+}
+
+/* ===== Markdown 预览 ===== */
+.markdown-preview {
+  width: 100%;
+  height: 100%;
+  padding: 28px 32px;
+  overflow-y: auto;
+  font-family: var(--font-family);
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  outline: none;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+.markdown-preview h1 { font-size: 1.7em; border-bottom: 1px solid var(--color-border); padding-bottom: 0.3em; }
+.markdown-preview h2 { font-size: 1.4em; border-bottom: 1px solid var(--color-border); padding-bottom: 0.25em; }
+.markdown-preview h3 { font-size: 1.2em; }
+.markdown-preview h4 { font-size: 1.1em; }
+.markdown-preview h5 { font-size: 1em; }
+.markdown-preview h6 { font-size: 0.95em; color: var(--color-text-secondary); }
+
+.markdown-preview p {
+  margin-bottom: 0.75em;
+}
+
+.markdown-preview blockquote {
+  margin: 0.5em 0;
+  padding: 0.5em 1em;
+  border-left: 3px solid var(--color-accent);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-secondary);
+  border-radius: 0 4px 4px 0;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+
+.markdown-preview li {
+  margin-bottom: 0.25em;
+}
+
+.markdown-preview code {
+  padding: 0.15em 0.4em;
+  font-size: 0.9em;
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
+  background-color: var(--color-bg-tertiary);
+  border-radius: 3px;
+  color: var(--color-text);
+}
+
+.markdown-preview pre {
+  margin: 0.75em 0;
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.markdown-preview pre code {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+/* ===== 代码高亮 token 样式 ===== */
+.hljs-comment,
+.hljs-quote { color: #8a8fa0; font-style: italic; }
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-type { color: #d73a49; }
+.hljs-string,
+.hljs-addition { color: #22863a; }
+.hljs-number,
+.hljs-literal { color: #005cc5; }
+.hljs-title,
+.hljs-section,
+.hljs-selector-id { color: #6f42c1; }
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable { color: #e36209; }
+.hljs-name,
+.hljs-built_in,
+.hljs-builtin-name { color: #005cc5; }
+.hljs-meta,
+.hljs-meta-keyword { color: #8a8fa0; }
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link { color: #d73a49; }
+.hljs-deletion { color: #d73a49; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 600; }
+.hljs-doctag,
+.hljs-formula { color: #6f42c1; }
+.hljs-params { color: #24292e; }
+.hljs-punctuation,
+.hljs-operator { color: #24292e; }
+.hljs-property { color: #005cc5; }
+.hljs-regexp { color: #22863a; }
+.hljs-selector-class { color: #6f42c1; }
+.hljs-selector-pseudo { color: #6f42c1; }
+.hljs-subst { color: #24292e; }
+.hljs-tag { color: #22863a; }
+
+/* 深色主题代码高亮 */
+[data-theme="dark"] .hljs-comment,
+[data-theme="dark"] .hljs-quote { color: #7878a0; }
+[data-theme="dark"] .hljs-keyword,
+[data-theme="dark"] .hljs-selector-tag,
+[data-theme="dark"] .hljs-type { color: #ff7b7b; }
+[data-theme="dark"] .hljs-string,
+[data-theme="dark"] .hljs-addition { color: #7ee787; }
+[data-theme="dark"] .hljs-number,
+[data-theme="dark"] .hljs-literal { color: #79c0ff; }
+[data-theme="dark"] .hljs-title,
+[data-theme="dark"] .hljs-section,
+[data-theme="dark"] .hljs-selector-id { color: #d2a8ff; }
+[data-theme="dark"] .hljs-attr,
+[data-theme="dark"] .hljs-attribute,
+[data-theme="dark"] .hljs-variable,
+[data-theme="dark"] .hljs-template-variable { color: #ffa657; }
+[data-theme="dark"] .hljs-name,
+[data-theme="dark"] .hljs-built_in,
+[data-theme="dark"] .hljs-builtin-name { color: #79c0ff; }
+[data-theme="dark"] .hljs-meta,
+[data-theme="dark"] .hljs-meta-keyword { color: #7878a0; }
+[data-theme="dark"] .hljs-symbol,
+[data-theme="dark"] .hljs-bullet,
+[data-theme="dark"] .hljs-link { color: #ff7b7b; }
+[data-theme="dark"] .hljs-deletion { color: #ff7b7b; }
+[data-theme="dark"] .hljs-doctag,
+[data-theme="dark"] .hljs-formula { color: #d2a8ff; }
+[data-theme="dark"] .hljs-params { color: #e8e8f0; }
+[data-theme="dark"] .hljs-punctuation,
+[data-theme="dark"] .hljs-operator { color: #e8e8f0; }
+[data-theme="dark"] .hljs-property { color: #79c0ff; }
+[data-theme="dark"] .hljs-regexp { color: #7ee787; }
+[data-theme="dark"] .hljs-selector-class { color: #d2a8ff; }
+[data-theme="dark"] .hljs-selector-pseudo { color: #d2a8ff; }
+[data-theme="dark"] .hljs-subst { color: #e8e8f0; }
+[data-theme="dark"] .hljs-tag { color: #7ee787; }
+
+/* ===== KaTeX 深色主题适配 ===== */
+[data-theme="dark"] .katex { color: #e8e8f0; }
+[data-theme="dark"] .katex .mord { color: #e8e8f0; }
+
+/* ===== Mermaid 图表 ===== */
+.mermaid-block {
+  margin: 1em 0;
+  padding: 14px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow-x: auto;
+  text-align: center;
+}
+.mermaid-block pre {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+}
+.mermaid-rendered {
+  margin: 1em 0;
+  padding: 12px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+.mermaid-error-block {
+  margin: 1em 0;
+  padding: 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+.mermaid-error__msg {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 8px;
+}
+[data-theme="dark"] .mermaid-error-block { background: #3b1111; border-color: #7f1d1d; }
+[data-theme="dark"] .mermaid-error__msg { color: #fca5a5; }
+
+.markdown-preview table {
+  width: 100%;
+  margin: 0.75em 0;
+  border-collapse: collapse;
+  font-size: var(--font-size-base);
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.markdown-preview th {
+  background-color: var(--color-bg-secondary);
+  font-weight: 600;
+}
+
+.markdown-preview tr:nth-child(even) {
+  background-color: var(--color-bg-secondary);
+}
+
+.markdown-preview a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0;
+}
+
+.markdown-preview hr {
+  margin: 1em 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.markdown-preview strong {
+  font-weight: 600;
+}
+
+.markdown-preview em {
+  font-style: italic;
+}

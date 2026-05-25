@@ -1,0 +1,541 @@
+/* ===== 编辑器面板 ===== */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  min-height: 46px;
+}
+
+.editor-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-secondary);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.editor-toolbar__btn:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.editor-toolbar__btn:active {
+  background-color: var(--color-border);
+}
+
+.editor-toolbar__sep {
+  width: 1px;
+  height: 18px;
+  background-color: var(--color-border);
+  margin: 0 var(--spacing-xs);
+}
+
+.editor-toolbar__select {
+  height: 32px;
+  padding: 0 6px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.editor-toolbar__select:hover {
+  border-color: var(--color-accent);
+}
+
+.editor-toolbar__select--heading {
+  width: 80px;
+}
+
+.editor-toolbar__select--font {
+  width: 140px;
+}
+
+.editor-toolbar__select--size {
+  width: 64px;
+}
+
+/* 导出菜单 */
+.editor-export-menu {
+  position: relative;
+}
+
+.editor-export-menu__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 140px;
+  margin-top: 2px;
+  padding: 4px 0;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.editor-export-menu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-export-menu__item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.editor-view-menu {
+  position: relative;
+}
+
+.editor-view-menu__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 210px;
+  margin-top: 2px;
+  padding: 4px 0;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.editor-view-menu__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 6px 14px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-view-menu__item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.editor-view-menu__item--active {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.editor-view-menu__shortcut {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-left: 16px;
+}
+
+.editor-view-menu__sep {
+  height: 1px;
+  margin: 4px 8px;
+  background-color: var(--color-border);
+}
+
+.editor-insert-menu {
+  position: relative;
+}
+
+.editor-insert-menu__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 120px;
+  margin-top: 2px;
+  padding: 4px 0;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.editor-insert-menu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-insert-menu__item:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.editor-toolbar__spacer {
+  flex: 1;
+}
+
+.editor-toolbar__modes {
+  display: flex;
+  gap: 1px;
+}
+
+.editor-toolbar__mode-btn {
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-muted);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.editor-toolbar__mode-btn:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.editor-toolbar__mode-btn:last-child {
+  border-radius: 0 3px 3px 0;
+}
+
+.editor-toolbar__mode-btn:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.editor-toolbar__mode-btn--active {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.editor-toolbar__mode-btn--active:hover {
+  background-color: var(--color-accent-hover);
+  color: #ffffff;
+}
+
+/* 状态消息条 */
+.editor-status-msg {
+  padding: 4px var(--spacing-md);
+  font-size: var(--font-size-xs);
+  color: #92400e;
+  background-color: #fef3c7;
+  border-bottom: 1px solid #fde68a;
+  flex-shrink: 0;
+}
+
+/* ===== 查找替换栏 ===== */
+.find-replace-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  min-height: 36px;
+}
+
+.find-replace-bar__input {
+  height: 28px;
+  padding: 0 8px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  width: 180px;
+}
+
+.find-replace-bar__input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.find-replace-bar__count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  min-width: 50px;
+}
+
+.find-replace-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family);
+  color: var(--color-text-secondary);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.find-replace-bar__btn:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text);
+}
+
+.find-replace-bar__btn--active {
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.find-replace-bar__btn--active:hover {
+  background-color: var(--color-accent-hover);
+  color: #ffffff;
+}
+
+.find-replace-bar__sep {
+  width: 1px;
+  height: 20px;
+  background-color: var(--color-border);
+  margin: 0 2px;
+}
+
+.find-replace-bar__spacer {
+  flex: 1;
+}
+
+/* 所见即所得编辑器 */
+.typora-editor {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.typora-editor .milkdown,
+.typora-editor .editor {
+  min-height: 100%;
+}
+
+.typora-editor .milkdown .editor[contenteditable] {
+  padding: 28px 32px;
+  max-width: 860px;
+  margin: 0 auto;
+  outline: none;
+  line-height: 1.75;
+}
+
+.typora-editor .milkdown-menu-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 写作模式拖拽高亮 */
+.typora-editor--drag-over {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
+  background-color: rgba(74, 124, 247, 0.04);
+  position: relative;
+}
+
+.typora-editor--drag-over::after {
+  content: "释放图片以插入";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-accent);
+  background-color: rgba(74, 124, 247, 0.06);
+  pointer-events: none;
+  z-index: 20;
+}
+
+[data-theme="dark"] .typora-editor--drag-over {
+  background-color: rgba(106, 140, 255, 0.06);
+}
+
+[data-theme="dark"] .typora-editor--drag-over::after {
+  background-color: rgba(106, 140, 255, 0.08);
+}
+
+/* 写作模式用户自定义字体/字号覆盖 Milkdown Crepe 默认值 */
+.typora-editor .milkdown {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+}
+
+.typora-editor .milkdown .ProseMirror {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+}
+
+.typora-editor .milkdown .ProseMirror p {
+  font-size: var(--editor-font-size);
+}
+
+.typora-editor .milkdown .ProseMirror li {
+  font-size: var(--editor-font-size);
+}
+
+.typora-editor .milkdown .ProseMirror blockquote {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+}
+
+.typora-editor .milkdown .ProseMirror td,
+.typora-editor .milkdown .ProseMirror th {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+}
+
+.typora-editor .milkdown .ProseMirror h1 {
+  font-family: var(--editor-font-family);
+  font-size: calc(var(--editor-font-size, 16px) * 2.5);
+}
+
+.typora-editor .milkdown .ProseMirror h2 {
+  font-family: var(--editor-font-family);
+  font-size: calc(var(--editor-font-size, 16px) * 2);
+}
+
+.typora-editor .milkdown .ProseMirror h3 {
+  font-family: var(--editor-font-family);
+  font-size: calc(var(--editor-font-size, 16px) * 1.75);
+}
+
+.typora-editor .milkdown .ProseMirror h4 {
+  font-family: var(--editor-font-family);
+  font-size: calc(var(--editor-font-size, 16px) * 1.5);
+}
+
+.typora-editor .milkdown .ProseMirror h5 {
+  font-family: var(--editor-font-family);
+  font-size: calc(var(--editor-font-size, 16px) * 1.25);
+}
+
+.typora-editor .milkdown .ProseMirror h6 {
+  font-family: var(--editor-font-family);
+  font-size: calc(var(--editor-font-size, 16px) * 1.1);
+}
+
+
+/* 预览查找高亮 */
+.preview-find-match {
+  background: rgba(255, 214, 102, 0.55);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.preview-find-match.active {
+  background: #4f7cff;
+  color: #fff;
+}
+
+/* 写作模式查找高亮 */
+.writing-find-match {
+  background: rgba(255, 193, 7, 0.7);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
+}
+.writing-find-match-current {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+}
+[data-theme="dark"] .writing-find-match {
+  background: rgba(255, 193, 7, 0.5);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
+}
+[data-theme="dark"] .writing-find-match-current {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+}
+
+.editor-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.editor-empty-state__icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.4;
+}
+
+.editor-empty-state__text {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.editor-empty-state__hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.panel__body--editor-editing {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 0;
+}
+
+.editor-textarea {
+  width: 100%;
+  height: 100%;
+  padding: 28px 32px;
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas",
+    "Courier New", monospace;
+  font-size: 18px;
+  line-height: 1.75;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+}
+
+.editor-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.editor-textarea--drag-over {
+  background-color: #eef3ff;
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
+}

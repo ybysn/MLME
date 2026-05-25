@@ -26,6 +26,7 @@ import { TyporaEditorPanel } from "./TyporaEditorPanel";
 import { EditorToolbar } from "./EditorToolbar";
 import { useFindReplace } from "./useFindReplace";
 import { useImageInsert } from "./useImageInsert";
+import { getMarkdownStats } from "../../editor/markdown/word_count";
 import type { TyporaEditorPanelHandle } from "./TyporaEditorPanel";
 
 const logger = createLogger("EditorPanel");
@@ -404,11 +405,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
 
     // ── 统计 ────────────────────────────────────
 
-    const charCount = content.length;
-    const lineCount = content ? content.split("\n").length : 0;
-    const wordMatches =
-      content.match(/[\u4e00-\u9fff\uff00-\uffef]|[a-zA-Z0-9]+/g) ?? [];
-    const wordCount = wordMatches.length;
+    const stats = getMarkdownStats(content);
 
     // ── 未编辑态 ────────────────────────────────
 
@@ -427,8 +424,8 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           <footer className="status-bar">
             <span className="status-bar__item">就绪</span>
             <span className="status-bar__item status-bar__spacer" />
-            <span className="status-bar__item">字数 {charCount}</span>
-            <span className="status-bar__item">行 {lineCount}</span>
+            <span className="status-bar__item">字符 {stats.charCount}</span>
+            <span className="status-bar__item">行 {stats.lineCount}</span>
           </footer>
         </div>
       );
@@ -584,9 +581,9 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           >
             {autoSaveEnabled ? "自动保存: 开" : "自动保存: 关"}
           </button>
-          <span className="status-bar__item">字数 {charCount}</span>
-          <span className="status-bar__item">词数 {wordCount}</span>
-          <span className="status-bar__item">行 {lineCount}</span>
+          <span className="status-bar__item">字数 {stats.wordCount}</span>
+          <span className="status-bar__item">字符 {stats.charCount}</span>
+          <span className="status-bar__item">行 {stats.lineCount}</span>
           <span className="status-bar__item">标题 {headingCount}</span>
         </footer>
       </div>

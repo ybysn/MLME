@@ -24,7 +24,8 @@ import { Crepe } from "@milkdown/crepe";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/nord.css";
 import "katex/dist/katex.min.css";
-import { editorViewCtx } from "@milkdown/kit/core";
+import { commandsCtx, editorViewCtx } from "@milkdown/kit/core";
+import { wrapInHeadingCommand } from "@milkdown/kit/preset/commonmark";
 import {
   normalizeMarkdownImageSources,
   detectUnsafeImageSources,
@@ -65,6 +66,8 @@ export interface TyporaEditorPanelHandle {
   getWritingFindMatchCount: () => number;
   getSelectedText: () => string;
   refreshContent: (newContent: string) => void;
+  /** 设置当前块的标题级别（0=段落, 1-6=H1-H6） */
+  setHeadingLevel: (level: number) => void;
 }
 
 export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEditorPanelProps>(
@@ -342,6 +345,24 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       setRefreshVersion((v) => v + 1);
     }, []);
 
+    /** 设置当前块标题级别（0=段落, 1-6=H1-H6） */
+    const setHeadingLevel = useCallback((level: number) => {
+      const clampedLevel = Math.max(0, Math.min(6, Math.round(level)));
+      const crepe = crepeRef.current;
+      if (!crepe) {
+        console.warn("[TyporaEditor] setHeadingLevel called before editor ready");
+        return;
+      }
+      try {
+        crepe.editor.action((ctx) => {
+          const commands = ctx.get(commandsCtx);
+          commands.call(wrapInHeadingCommand.key, clampedLevel);
+        });
+      } catch (err) {
+        console.warn("[TyporaEditor] setHeadingLevel failed", err);
+      }
+    }, []);
+
     // ── MutationObserver（图片自动 patch） ──
     useEffect(() => {
       const container = containerRef.current;
@@ -383,7 +404,8 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       getWritingFindMatchCount,
       getSelectedText,
       refreshContent,
-    }), [insertImageFiles, updateWritingFind, scrollToWritingFindMatch, getWritingFindMatchCount, getSelectedText, refreshContent]);
+      setHeadingLevel,
+    }), [insertImageFiles, updateWritingFind, scrollToWritingFindMatch, getWritingFindMatchCount, getSelectedText, refreshContent, setHeadingLevel]);
 
     // ── 原生 capture-phase 拖拽 ──
     useEffect(() => {

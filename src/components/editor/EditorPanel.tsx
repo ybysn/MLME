@@ -755,13 +755,21 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
         <div className="editor-toolbar">
           <button className="editor-toolbar__btn" title="切换侧边栏 (Ctrl+\)" onClick={onToggleSidebar}>&#9776;</button>
           <span className="editor-toolbar__sep" />
+          <select className="editor-toolbar__select editor-toolbar__select--heading" title="标题级别" onChange={(e) => {
+            const level = Number(e.target.value);
+            if (viewMode === "wysiwyg") {
+              typoraEditorRef.current?.setHeadingLevel(level);
+            } else {
+              applyCommand(setHeadingLevel, level);
+            }
+            e.target.value = "";
+          }} defaultValue="">
+            <option value="" disabled>标题</option>
+            {HEADING_OPTIONS.map((opt) => (<option key={opt.level} value={opt.level}>{opt.label}</option>))}
+          </select>
+          <span className="editor-toolbar__sep" />
           {viewMode !== "wysiwyg" && (
             <>
-              <select className="editor-toolbar__select editor-toolbar__select--heading" title="标题级别" onChange={(e) => { const level = Number(e.target.value); applyCommand(setHeadingLevel, level); e.target.value = ""; }} defaultValue="">
-                <option value="" disabled>标题</option>
-                {HEADING_OPTIONS.map((opt) => (<option key={opt.level} value={opt.level}>{opt.label}</option>))}
-              </select>
-              <span className="editor-toolbar__sep" />
               <button className="editor-toolbar__btn" title="加粗 (Ctrl+B)" onClick={() => applyCommand(toggleBold)}><strong>B</strong></button>
               <button className="editor-toolbar__btn" title="斜体 (Ctrl+I)" onClick={() => applyCommand(toggleItalic)}><em>I</em></button>
               <button className="editor-toolbar__btn" title="行内代码 (Ctrl+E)" onClick={() => applyCommand(toggleInlineCode)}>{"</>"}</button>

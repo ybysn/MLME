@@ -96,7 +96,7 @@ export function SettingsPanel({ open, settings, onSave, onCancel }: SettingsPane
             <select className="settings-field__input" value={form.defaultViewMode}
               onChange={(e) =>                 set("defaultViewMode", e.target.value as "wysiwyg" | "source" | "split")}>
               <option value="wysiwyg">写作模式</option>
-              <option value="source">源码模式</option>
+              <option value="source">源码视图</option>
               <option value="split">分屏模式</option>
             </select>
           </label>

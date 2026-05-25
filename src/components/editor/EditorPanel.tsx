@@ -85,7 +85,7 @@ interface PendingSelection {
 
 const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
   { value: "wysiwyg", label: "写作模式" },
-  { value: "source", label: "源码" },
+  { value: "source", label: "源码视图" },
   { value: "split", label: "分屏" },
 ];
 
@@ -816,7 +816,7 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
           {/* 视图模式切换 */}
           <span className="editor-toolbar__sep" />
           <div className="editor-toolbar__modes">
-            {VIEW_MODE_OPTIONS.map((opt) => (
+            {VIEW_MODE_OPTIONS.filter((opt) => opt.value !== "source").map((opt) => (
               <button
                 key={opt.value}
                 className={`editor-toolbar__mode-btn ${viewMode === opt.value ? "editor-toolbar__mode-btn--active" : ""}`}
@@ -826,6 +826,13 @@ export const EditorPanel = forwardRef<EditorPanelHandle, EditorPanelProps>(
               </button>
             ))}
           </div>
+          <button
+            className={`editor-toolbar__btn ${viewMode === "source" ? "editor-toolbar__mode-btn--active" : ""}`}
+            title="Markdown 源码视图（高级）"
+            onClick={() => setViewMode("source")}
+          >
+            源码
+          </button>
 
           <span className="editor-toolbar__sep" />
           {onToggleFocus && (

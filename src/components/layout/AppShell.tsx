@@ -652,7 +652,7 @@ export function AppShell() {
     { id: "save", title: "保存", keywords: ["save"], shortcut: "Ctrl+S" },
     { id: "saveAs", title: "另存为", keywords: ["save as"], shortcut: "Ctrl+Shift+S" },
     { id: "wysiwyg", title: "写作模式", description: "所见即所得编辑", keywords: ["wysiwyg", "writing"], disabled: !hasActiveDocument },
-    { id: "source", title: "源码模式", description: "Markdown 源码编辑", keywords: ["source", "code"], disabled: !hasActiveDocument },
+    { id: "source", title: "源码视图", description: "Markdown 源码编辑", keywords: ["source", "code"], disabled: !hasActiveDocument },
     { id: "split", title: "分屏模式", description: "源码与预览并排", keywords: ["split", "preview"], disabled: !hasActiveDocument },
     { id: "settings", title: "打开设置", keywords: ["settings", "config"] },
     { id: "exportHtml", title: "导出 HTML", description: "导出为 HTML 文件", keywords: ["export", "html"], disabled: !hasActiveDocument },

@@ -27,6 +27,7 @@ import "katex/dist/katex.min.css";
 import { commandsCtx, editorViewCtx } from "@milkdown/kit/core";
 import { wrapInHeadingCommand } from "@milkdown/kit/preset/commonmark";
 import { undoCommand, redoCommand } from "@milkdown/kit/plugin/history";
+import { AllSelection } from "@milkdown/kit/prose/state";
 import {
   normalizeMarkdownImageSources,
   detectUnsafeImageSources,
@@ -500,10 +501,32 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       el.addEventListener("dragleave", onDragLeaveCapture, { capture: true });
       el.addEventListener("drop", onDropCapture, { capture: true });
 
+      // Ctrl+A 全选限定在编辑器内
+      const onKeyDownCapture = (e: KeyboardEvent) => {
+        if (e.isComposing || e.key === "Process") return;
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+          if (!(e.target instanceof HTMLElement)) return;
+          if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            const crepe = crepeRef.current;
+            if (!crepe) return;
+            const view = crepe.editor.ctx.get(editorViewCtx);
+            if (!view) return;
+            view.dispatch(view.state.tr.setSelection(new AllSelection(view.state.doc)));
+          } catch {
+            // ignore
+          }
+        }
+      };
+      el.addEventListener("keydown", onKeyDownCapture, { capture: true });
+
       return () => {
         el.removeEventListener("dragover", onDragOverCapture, { capture: true });
         el.removeEventListener("dragleave", onDragLeaveCapture, { capture: true });
         el.removeEventListener("drop", onDropCapture, { capture: true });
+        el.removeEventListener("keydown", onKeyDownCapture, { capture: true });
       };
     }, [insertImageFiles]);
 

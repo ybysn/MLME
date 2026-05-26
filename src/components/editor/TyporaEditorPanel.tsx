@@ -73,6 +73,8 @@ export interface TyporaEditorPanelHandle {
   undo: () => void;
   /** 重做 */
   redo: () => void;
+  /** 在光标位置插入文本 */
+  insertText: (text: string) => void;
 }
 
 export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEditorPanelProps>(
@@ -396,6 +398,21 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       }
     }, []);
 
+    /** 在光标位置插入文本 */
+    const insertText = useCallback((text: string) => {
+      const crepe = crepeRef.current;
+      if (!crepe) return;
+      try {
+        const view = crepe.editor.ctx.get(editorViewCtx);
+        if (!view) return;
+        const { state, dispatch } = view;
+        const tr = state.tr.insertText(text, state.selection.from, state.selection.to);
+        dispatch(tr);
+      } catch (err) {
+        console.warn("[TyporaEditor] insertText failed", err);
+      }
+    }, []);
+
     // ── MutationObserver（图片自动 patch） ──
     useEffect(() => {
       const container = containerRef.current;
@@ -440,7 +457,8 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
       setHeadingLevel,
       undo,
       redo,
-    }), [insertImageFiles, updateWritingFind, scrollToWritingFindMatch, getWritingFindMatchCount, getSelectedText, refreshContent, setHeadingLevel, undo, redo]);
+      insertText,
+    }), [insertImageFiles, updateWritingFind, scrollToWritingFindMatch, getWritingFindMatchCount, getSelectedText, refreshContent, setHeadingLevel, undo, redo, insertText]);
 
     // ── 原生 capture-phase 拖拽 ──
     useEffect(() => {
@@ -664,6 +682,43 @@ export const TyporaEditorPanel = forwardRef<TyporaEditorPanelHandle, TyporaEdito
         console.debug("[WRITING_LIFECYCLE] cleanup generation", createGen);
       };
     }, [currentPath, refreshVersion, safeRaf, patchAllImages]);
+
+    // ── block-edit 菜单 tab 内容隔离 ──
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      let menuObserver: MutationObserver | null = null;
+
+      const updateActiveGroup = () => {
+        const tabs = container.querySelectorAll('.milkdown-slash-menu .tab-group li');
+        const groups = container.querySelectorAll('.milkdown-slash-menu .menu-group');
+        if (tabs.length === 0 || groups.length === 0) return;
+        const selectedIdx = Array.from(tabs).findIndex((li) => li.classList.contains('selected'));
+        groups.forEach((g, i) => {
+          g.classList.toggle('milkdown-tab-active', i === selectedIdx);
+        });
+      };
+
+      const localObserver = new MutationObserver(() => {
+        const menu = container.querySelector('.milkdown-slash-menu');
+        if (menu && !menuObserver) {
+          updateActiveGroup();
+          menuObserver = new MutationObserver(() => updateActiveGroup());
+          menuObserver.observe(menu, { subtree: true, attributes: true, attributeFilter: ['class'] });
+        } else if (!menu && menuObserver) {
+          menuObserver.disconnect();
+          menuObserver = null;
+        }
+      });
+
+      localObserver.observe(container, { childList: true, subtree: true });
+
+      return () => {
+        localObserver.disconnect();
+        if (menuObserver) menuObserver.disconnect();
+      };
+    }, []);
 
     // ── 大纲跳转 ──
     useEffect(() => {

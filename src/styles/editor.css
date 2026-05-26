@@ -778,3 +778,18 @@
   color: #fca5a5 !important;
   border-color: #991b1b !important;
 }
+
+/* Crepe block-edit 菜单 tab 内容隔离 */
+.milkdown .milkdown-slash-menu .menu-groups {
+  overflow: hidden;
+  max-height: none;
+}
+
+.milkdown .milkdown-slash-menu .menu-group {
+  overflow-y: auto;
+  max-height: 380px;
+}
+
+.milkdown .milkdown-slash-menu .menu-group:not(.milkdown-tab-active) {
+  display: none;
+}

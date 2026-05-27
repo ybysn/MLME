@@ -54,7 +54,7 @@ export function WelcomeScreen({
   return (
     <div className="welcome-screen">
       <div className="welcome-screen__content">
-        <h1 className="welcome-screen__title">Shadow Markdown Editor</h1>
+        <h1 className="welcome-screen__title">MLME</h1>
         <p className="welcome-screen__subtitle">本地优先的 Markdown 编辑器</p>
         <div className="welcome-screen__actions">
           <button className="welcome-screen__btn welcome-screen__btn--primary" onClick={onNewDocument}>

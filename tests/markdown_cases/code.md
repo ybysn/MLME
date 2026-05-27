@@ -6,19 +6,9 @@ export function hello(name: string): string {
 }
 ```
 
-\`\`
+![image-000000006a14dfa2-745c.png](code.assets/image-000000006a14dfa2-745c.png)
 
 <br />
-
-[export function hello(name: string): string {](dfhgsdg)\
-[return](dfhgsdg) [`hello ${name}`;](dfhgsdg)\
-[}](dfhgsdg)
-
-<br />
-
-![1.00](code.assets/image-000000006a11193f-d0b8.png)
-
-`import os`
 
 <br />
 

@@ -27,17 +27,20 @@
 ## 开发
 
 ```bash
-# 安装依赖
-npm install
+# 安装依赖（需要 pnpm）
+pnpm install
 
-# 启动开发服务器（仅前端）
-npm run dev
+# 启动前端开发服务器
+pnpm dev
 
-# 构建
-npm run build
+# 构建前端
+pnpm build
 
 # 启动 Tauri 桌面应用
-npm run tauri dev
+pnpm tauri dev
+
+# 构建 Tauri 安装包
+pnpm tauri build
 ```
 
 ## 快捷键

@@ -1,9 +1,6 @@
 /**
- * 模块职责：中间编辑区面板，使用 textarea 作为临时编辑区并显示底部状态栏。
- * 当前输入：文档内容、文件名、脏状态、编辑状态、标题数、内容变更回调、文件操作回调。
- * 当前输出：工具栏（含视图模式切换）+ textarea/MarkdownPreview/分屏、底部状态栏。
- * 后续扩展点：替换 textarea 为 Milkdown 编辑器，接入编辑器文档模型。
- * 公开 ref：scrollToLine(line) 用于大纲跳转。
+ * 模块职责：中间编辑区面板，统一管理三种视图模式（写作/源码/分屏）。
+ * 写作和分屏模式使用 TyporaEditorPanel（Milkdown Crepe），源码模式使用 textarea。
  */
 import {
   forwardRef,

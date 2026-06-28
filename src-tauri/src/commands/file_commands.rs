@@ -253,19 +253,56 @@ pub fn write_html_file(path: String, content: String) -> Result<(), String> {
     Ok(())
 }
 
-/// 在 Windows 上查找 Edge 或 Chrome 的可执行文件路径。
+/// 跨平台查找 Chromium 系浏览器可执行文件路径。
 fn find_browser() -> Option<String> {
-    let candidates = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-    ];
-    for candidate in &candidates {
-        if Path::new(candidate).exists() {
-            return Some(candidate.to_string());
+    #[cfg(target_os = "windows")]
+    {
+        let candidates = [
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        ];
+        for candidate in &candidates {
+            if Path::new(candidate).exists() {
+                return Some(candidate.to_string());
+            }
         }
     }
+
+    #[cfg(target_os = "macos")]
+    {
+        let candidates = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+            "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        ];
+        for candidate in &candidates {
+            if Path::new(candidate).exists() {
+                return Some(candidate.to_string());
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let candidates = [
+            "google-chrome", "google-chrome-stable", "chromium", "chromium-browser",
+            "microsoft-edge", "microsoft-edge-stable",
+        ];
+        for candidate in &candidates {
+            // which 判断是否在 PATH 中
+            if std::process::Command::new("which")
+                .arg(candidate)
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false)
+            {
+                return Some(candidate.to_string());
+            }
+        }
+    }
+
     None
 }
 

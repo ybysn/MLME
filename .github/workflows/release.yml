@@ -13,12 +13,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -50,12 +49,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -86,12 +84,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
       - uses: dtolnay/rust-toolchain@stable
 

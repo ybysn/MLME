@@ -470,6 +470,60 @@
   background: #5b8af7;
 }
 
+/* ===== 深色模式：编辑区 & Milkdown Crepe ===== */
+[data-theme="dark"] .panel__body--editor-editing {
+  background-color: var(--color-bg);
+}
+
+[data-theme="dark"] .typora-editor {
+  background-color: var(--color-bg);
+}
+
+/* Milkdown Crepe 深色主题变量覆盖 */
+[data-theme="dark"] .typora-editor .milkdown {
+  --crepe-color-background: var(--color-bg);
+  --crepe-color-on-background: var(--color-text);
+  --crepe-color-surface: var(--color-bg-secondary);
+  --crepe-color-surface-low: var(--color-bg-tertiary);
+  --crepe-color-on-surface: var(--color-text);
+  --crepe-color-on-surface-variant: var(--color-text-secondary);
+  --crepe-color-outline: var(--color-text-muted);
+  --crepe-color-primary: var(--color-accent);
+  --crepe-color-secondary: var(--color-bg-tertiary);
+  --crepe-color-on-secondary: var(--color-text-secondary);
+  --crepe-color-inverse: var(--color-text);
+  --crepe-color-on-inverse: var(--color-bg);
+  --crepe-color-inline-code: var(--color-accent-text);
+  --crepe-color-error: #ff7b72;
+  --crepe-color-hover: var(--color-bg-hover);
+  --crepe-color-selected: var(--color-bg-active);
+  --crepe-color-inline-area: var(--color-bg-secondary);
+  --crepe-shadow-1: 0px 1px 2px 0px rgba(0,0,0,0.4), 0px 1px 3px 1px rgba(0,0,0,0.25);
+  --crepe-shadow-2: 0px 1px 2px 0px rgba(0,0,0,0.4), 0px 2px 6px 2px rgba(0,0,0,0.25);
+}
+
+/* ProseMirror 编辑区深色 */
+[data-theme="dark"] .typora-editor .milkdown .ProseMirror {
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+/* Crepe 工具栏深色 */
+[data-theme="dark"] .typora-editor .milkdown .crepe-toolbar,
+[data-theme="dark"] .typora-editor .milkdown .milkdown-toolbar {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border);
+}
+
+/* Crepe slash-menu / block-edit 深色 */
+[data-theme="dark"] .typora-editor .milkdown .milkdown-slash-menu,
+[data-theme="dark"] .typora-editor .milkdown .milkdown-block-edit-panel,
+[data-theme="dark"] .typora-editor .milkdown .milkdown-menu-wrapper {
+  background-color: var(--color-bg);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-lg);
+}
+
 /* ===== 符号面板 ===== */
 .symbol-panel-wrapper {
   position: relative;

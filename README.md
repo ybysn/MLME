@@ -9,6 +9,16 @@
 - **桌面框架**: Tauri 2 (Rust 后端)
 - **渲染**: markdown-it + highlight.js + KaTeX（数学公式）+ Mermaid（图表）
 
+## 前置环境
+
+- **Node.js** >= 18（推荐 22 LTS）
+- **pnpm** >= 9
+- **Rust** (通过 [rustup](https://rustup.rs) 安装)
+- **系统依赖**：
+  - **Windows**: 无需额外依赖
+  - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+  - **Linux**: `sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
+
 ## 功能
 
 - 三种编辑视图：写作模式（WYSIWYG）/ 源码模式 / 分屏

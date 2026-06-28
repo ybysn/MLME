@@ -1,4 +1,4 @@
-/* ===== 编辑器面板 ===== */
+/* ===== 编辑器工具栏 ===== */
 .editor-toolbar {
   display: flex;
   align-items: center;
@@ -7,141 +7,167 @@
   background-color: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
-  min-height: 46px;
+  min-height: 42px;
 }
 
+/* ── 工具栏按钮 ── */
 .editor-toolbar__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
   font-size: var(--font-size-sm);
   font-family: var(--font-family);
+  font-weight: 500;
   color: var(--color-text-secondary);
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 4px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
   cursor: pointer;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast),
+              box-shadow var(--transition-fast);
+  letter-spacing: -0.01em;
 }
 
 .editor-toolbar__btn:hover {
-  background-color: var(--color-bg-tertiary);
-  border-color: var(--color-border);
+  background-color: var(--color-bg-hover);
   color: var(--color-text);
 }
 
 .editor-toolbar__btn:active {
-  background-color: var(--color-border);
+  background-color: var(--color-bg-active);
 }
 
+/* ── 分隔符 ── */
 .editor-toolbar__sep {
   width: 1px;
   height: 18px;
   background-color: var(--color-border);
-  margin: 0 var(--spacing-xs);
+  margin: 0 2px;
 }
 
+.editor-toolbar__spacer {
+  flex: 1;
+}
+
+/* ── 下拉选择器 ── */
 .editor-toolbar__select {
-  height: 32px;
+  height: 30px;
   padding: 0 6px;
   font-size: var(--font-size-sm);
   font-family: var(--font-family);
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background-color: transparent;
+  border: none;
+  border-radius: var(--radius-md);
   cursor: pointer;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast);
+  letter-spacing: -0.01em;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a9790'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 20px;
 }
 
 .editor-toolbar__select:hover {
-  border-color: var(--color-accent);
+  background-color: var(--color-bg-hover);
+  color: var(--color-text);
 }
 
 .editor-toolbar__select--heading {
-  width: 80px;
+  min-width: 64px;
 }
 
 .editor-toolbar__select--font {
-  width: 140px;
+  min-width: 120px;
 }
 
 .editor-toolbar__select--size {
-  width: 64px;
+  min-width: 52px;
 }
 
-/* 导出菜单 */
-.editor-export-menu {
+/* ── 模式按钮（状态栏内） ── */
+.editor-toolbar__mode-btn {
+  padding: 3px 10px;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast);
+}
+
+.editor-toolbar__mode-btn:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+}
+
+/* ===== 下拉菜单（导出/视图/插入） ===== */
+.editor-export-menu,
+.editor-view-menu,
+.editor-insert-menu {
   position: relative;
 }
 
-.editor-export-menu__dropdown {
+.editor-export-menu__dropdown,
+.editor-view-menu__dropdown,
+.editor-insert-menu__dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   right: 0;
   z-index: 100;
-  min-width: 140px;
-  margin-top: 2px;
-  padding: 4px 0;
+  min-width: 160px;
+  padding: 4px;
   background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.editor-export-menu__item {
-  display: block;
-  width: 100%;
-  padding: 7px 14px;
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family);
-  color: var(--color-text);
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.editor-export-menu__item:hover {
-  background-color: var(--color-bg-tertiary);
-}
-
-.editor-view-menu {
-  position: relative;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 }
 
 .editor-view-menu__dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 100;
-  min-width: 210px;
-  margin-top: 2px;
-  padding: 4px 0;
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+}
+
+.editor-export-menu__item,
+.editor-view-menu__item,
+.editor-insert-menu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast);
+}
+
+.editor-export-menu__item:hover,
+.editor-view-menu__item:hover,
+.editor-insert-menu__item:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text);
 }
 
 .editor-view-menu__item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  padding: 6px 14px;
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family);
-  color: var(--color-text);
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.editor-view-menu__item:hover {
-  background-color: var(--color-bg-tertiary);
 }
 
 .editor-view-menu__item--active {
@@ -152,95 +178,17 @@
 .editor-view-menu__shortcut {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
-  margin-left: 16px;
+  margin-left: var(--spacing-lg);
+  font-family: var(--font-family-mono);
 }
 
 .editor-view-menu__sep {
   height: 1px;
-  margin: 4px 8px;
+  margin: 4px 6px;
   background-color: var(--color-border);
 }
 
-.editor-insert-menu {
-  position: relative;
-}
-
-.editor-insert-menu__dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 100;
-  min-width: 120px;
-  margin-top: 2px;
-  padding: 4px 0;
-  background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.editor-insert-menu__item {
-  display: block;
-  width: 100%;
-  padding: 7px 14px;
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family);
-  color: var(--color-text);
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.editor-insert-menu__item:hover {
-  background-color: var(--color-bg-tertiary);
-}
-
-.editor-toolbar__spacer {
-  flex: 1;
-}
-
-.editor-toolbar__modes {
-  display: flex;
-  gap: 1px;
-}
-
-.editor-toolbar__mode-btn {
-  padding: 4px 10px;
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family);
-  color: var(--color-text-muted);
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.editor-toolbar__mode-btn:first-child {
-  border-radius: 3px 0 0 3px;
-}
-
-.editor-toolbar__mode-btn:last-child {
-  border-radius: 0 3px 3px 0;
-}
-
-.editor-toolbar__mode-btn:hover {
-  background-color: var(--color-bg-tertiary);
-  color: var(--color-text-secondary);
-}
-
-.editor-toolbar__mode-btn--active {
-  background-color: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #ffffff;
-}
-
-.editor-toolbar__mode-btn--active:hover {
-  background-color: var(--color-accent-hover);
-  color: #ffffff;
-}
-
-/* 状态消息条 */
+/* ===== 状态消息条 ===== */
 .editor-status-msg {
   padding: 4px var(--spacing-md);
   font-size: var(--font-size-xs);
@@ -250,16 +198,22 @@
   flex-shrink: 0;
 }
 
+[data-theme="dark"] .editor-status-msg {
+  color: #fbbf24;
+  background-color: rgba(251,191,36,0.10);
+  border-bottom-color: rgba(251,191,36,0.15);
+}
+
 /* ===== 查找替换栏 ===== */
 .find-replace-bar {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px var(--spacing-md);
+  padding: 6px var(--spacing-md);
   background-color: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
-  min-height: 36px;
+  min-height: 38px;
 }
 
 .find-replace-bar__input {
@@ -269,20 +223,24 @@
   font-family: var(--font-family);
   color: var(--color-text);
   background-color: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
   width: 180px;
+  outline: none;
+  transition: box-shadow var(--transition-fast);
 }
 
 .find-replace-bar__input:focus {
-  border-color: var(--color-accent);
-  outline: none;
+  box-shadow: 0 0 0 2px var(--color-accent),
+              var(--shadow-xs);
 }
 
 .find-replace-bar__count {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   min-width: 50px;
+  font-family: var(--font-family-mono);
 }
 
 .find-replace-bar__btn {
@@ -294,15 +252,18 @@
   padding: 0 6px;
   font-size: var(--font-size-xs);
   font-family: var(--font-family);
+  font-weight: 500;
   color: var(--color-text-secondary);
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 3px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast);
 }
 
 .find-replace-bar__btn:hover {
-  background-color: var(--color-bg-tertiary);
+  background-color: var(--color-bg-hover);
   color: var(--color-text);
 }
 
@@ -318,7 +279,7 @@
 
 .find-replace-bar__sep {
   width: 1px;
-  height: 20px;
+  height: 18px;
   background-color: var(--color-border);
   margin: 0 2px;
 }
@@ -327,7 +288,61 @@
   flex: 1;
 }
 
-/* 所见即所得编辑器 */
+/* ===== 源码 textarea ===== */
+.editor-textarea {
+  width: 100%;
+  height: 100%;
+  padding: 28px 32px;
+  font-family: var(--font-family-mono);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 2;
+}
+
+.editor-textarea::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.editor-textarea--split {
+  padding: 20px 24px;
+}
+
+/* ===== 分屏布局 ===== */
+.panel__body--editor-editing {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel__body--editor-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.editor-split__pane {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-split__pane--edit {
+  border-right: 1px solid var(--color-border);
+}
+
+.editor-split__pane--preview {
+  background-color: var(--color-bg);
+}
+
+/* ===== 所见即所得编辑器 ===== */
 .typora-editor {
   width: 100%;
   height: 100%;
@@ -357,7 +372,7 @@
 .typora-editor--drag-over {
   outline: 2px dashed var(--color-accent);
   outline-offset: -2px;
-  background-color: rgba(74, 124, 247, 0.04);
+  background-color: var(--color-accent-bg);
   position: relative;
 }
 
@@ -368,23 +383,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-accent);
-  background-color: rgba(74, 124, 247, 0.06);
+  background-color: var(--color-accent-bg);
   pointer-events: none;
   z-index: 20;
 }
 
-[data-theme="dark"] .typora-editor--drag-over {
-  background-color: rgba(106, 140, 255, 0.06);
-}
-
-[data-theme="dark"] .typora-editor--drag-over::after {
-  background-color: rgba(106, 140, 255, 0.08);
-}
-
-/* 写作模式用户自定义字体/字号覆盖 Milkdown Crepe 默认值 */
+/* ── 写作模式字体覆盖 Milkdown 默认值 ── */
 .typora-editor .milkdown {
   font-family: var(--editor-font-family);
   font-size: var(--editor-font-size);
@@ -395,19 +402,9 @@
   font-size: var(--editor-font-size);
 }
 
-.typora-editor .milkdown .ProseMirror p {
-  font-size: var(--editor-font-size);
-}
-
-.typora-editor .milkdown .ProseMirror li {
-  font-size: var(--editor-font-size);
-}
-
-.typora-editor .milkdown .ProseMirror blockquote {
-  font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size);
-}
-
+.typora-editor .milkdown .ProseMirror p,
+.typora-editor .milkdown .ProseMirror li,
+.typora-editor .milkdown .ProseMirror blockquote,
 .typora-editor .milkdown .ProseMirror td,
 .typora-editor .milkdown .ProseMirror th {
   font-family: var(--editor-font-family);
@@ -416,380 +413,69 @@
 
 .typora-editor .milkdown .ProseMirror h1 {
   font-family: var(--editor-font-family);
-  font-size: calc(var(--editor-font-size, 16px) * 2.5);
+  font-size: calc(var(--editor-font-size, 16px) * 2.2);
+  font-weight: 700;
 }
-
 .typora-editor .milkdown .ProseMirror h2 {
   font-family: var(--editor-font-family);
-  font-size: calc(var(--editor-font-size, 16px) * 2);
+  font-size: calc(var(--editor-font-size, 16px) * 1.8);
+  font-weight: 600;
 }
-
 .typora-editor .milkdown .ProseMirror h3 {
   font-family: var(--editor-font-family);
-  font-size: calc(var(--editor-font-size, 16px) * 1.75);
+  font-size: calc(var(--editor-font-size, 16px) * 1.5);
+  font-weight: 600;
 }
-
 .typora-editor .milkdown .ProseMirror h4 {
   font-family: var(--editor-font-family);
-  font-size: calc(var(--editor-font-size, 16px) * 1.5);
+  font-size: calc(var(--editor-font-size, 16px) * 1.3);
 }
-
 .typora-editor .milkdown .ProseMirror h5 {
   font-family: var(--editor-font-family);
-  font-size: calc(var(--editor-font-size, 16px) * 1.25);
+  font-size: calc(var(--editor-font-size, 16px) * 1.15);
 }
-
 .typora-editor .milkdown .ProseMirror h6 {
   font-family: var(--editor-font-family);
-  font-size: calc(var(--editor-font-size, 16px) * 1.1);
+  font-size: calc(var(--editor-font-size, 16px) * 1.05);
 }
 
-
-/* 预览查找高亮 */
+/* ===== 查找高亮 ===== */
 .preview-find-match {
   background: rgba(255, 214, 102, 0.55);
   color: inherit;
-  border-radius: 3px;
-  padding: 0 2px;
+  border-radius: 2px;
+  padding: 0 1px;
 }
-
 .preview-find-match.active {
-  background: #4f7cff;
+  background: var(--color-accent);
   color: #fff;
 }
 
-/* 写作模式查找高亮 */
 .writing-find-match {
   background: rgba(255, 193, 7, 0.7);
   color: inherit;
-  border-radius: 3px;
-  padding: 0 2px;
+  border-radius: 2px;
+  padding: 0 1px;
   box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
 }
 .writing-find-match-current {
-  background: #2563eb;
+  background: var(--color-accent);
   color: #fff;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 2px rgba(59,109,240,0.35);
 }
 [data-theme="dark"] .writing-find-match {
   background: rgba(255, 193, 7, 0.5);
-  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
 }
 [data-theme="dark"] .writing-find-match-current {
-  background: #3b82f6;
-  color: #fff;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+  background: #5b8af7;
 }
 
-.editor-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-muted);
-}
-
-.editor-empty-state__icon {
-  font-size: 48px;
-  margin-bottom: var(--spacing-lg);
-  opacity: 0.4;
-}
-
-.editor-empty-state__text {
-  font-size: var(--font-size-lg);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
-}
-
-.editor-empty-state__hint {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-}
-
-.panel__body--editor-editing {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  padding: 0;
-}
-
-.editor-textarea {
-  width: 100%;
-  height: 100%;
-  padding: 28px 32px;
-  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas",
-    "Courier New", monospace;
-  font-size: 18px;
-  line-height: 1.75;
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  border: none;
-  outline: none;
-  resize: none;
-  tab-size: 2;
-}
-
-.editor-textarea::placeholder {
-  color: var(--color-text-muted);
-}
-
-.editor-textarea--drag-over {
-  background-color: #eef3ff;
-  outline: 2px dashed var(--color-accent);
-  outline-offset: -2px;
-}
-
-/* 深色模式写作区 Milkdown Crepe 变量覆盖 */
-[data-theme="dark"] .typora-editor .milkdown {
-  --crepe-color-background: #1e1e2e;
-  --crepe-color-on-background: #e8e8f0;
-  --crepe-color-surface: #252536;
-  --crepe-color-surface-low: #2d2d42;
-  --crepe-color-on-surface: #e8e8f0;
-  --crepe-color-on-surface-variant: #b0b0c8;
-  --crepe-color-outline: #404060;
-  --crepe-color-primary: #6a8cff;
-  --crepe-color-secondary: #3a3a5c;
-  --crepe-color-on-secondary: #e8e8f0;
-  --crepe-color-inline-code: #ff7b7b;
-  --crepe-color-error: #ff7b7b;
-  --crepe-color-hover: #2d2d42;
-  --crepe-color-selected: #3a3a5c;
-  --crepe-color-inline-area: #2d2d42;
-}
-
-/* 深色模式编辑区背景 */
-[data-theme="dark"] .typora-editor {
-  background-color: #1e1e2e;
-}
-
-/* 浅色模式代码块：白底黑字 */
-.typora-editor .milkdown .milkdown-code-block {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-}
-
-.typora-editor .milkdown .milkdown-code-block .cm-editor {
-  background: #ffffff;
-}
-
-.typora-editor .milkdown .milkdown-code-block .cm-content {
-  color: #111827;
-}
-
-.typora-editor .milkdown .milkdown-code-block .cm-line {
-  color: #111827;
-}
-
-/* 浅色模式代码块行号区 */
-.typora-editor .milkdown .milkdown-code-block .cm-gutters {
-  background: #f9fafb;
-  color: #6b7280;
-  border-right: 1px solid #e5e7eb;
-}
-
-/* 代码块内选中文本：浅灰背景 */
-.typora-editor .milkdown .milkdown-code-block .cm-selectionBackground,
-.typora-editor .milkdown .milkdown-code-block .cm-content ::selection {
-  background: #d1d5db !important;
-  color: #111827;
-}
-
-/* 深色模式代码块选中文本 */
-[data-theme="dark"] .typora-editor .milkdown .milkdown-code-block .cm-selectionBackground,
-[data-theme="dark"] .typora-editor .milkdown .milkdown-code-block .cm-content ::selection {
-  background: #4b5563 !important;
-  color: #f9fafb;
-}
-
-/* Copy 按钮交互样式 */
-.typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button {
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button:hover {
-  background: #e5e7eb;
-  color: #111827;
-}
-
-.typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button:active {
-  background: #d1d5db;
-}
-
-.typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button.copied,
-.typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button.failed {
-  width: auto !important;
-  height: auto !important;
-  min-width: unset !important;
-  max-width: unset !important;
-  padding: 4px 10px !important;
-  border-radius: 4px !important;
-}
-
-.typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button.copied {
-  background: #d1fae5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
-}
-
-.typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button.failed {
-  background: #fee2e2 !important;
-  color: #991b1b !important;
-  border-color: #fecaca !important;
-}
-
-[data-theme="dark"] .typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button:hover {
-  background: #374151;
-  color: #e5e7eb;
-}
-
-[data-theme="dark"] .typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button.copied {
-  background: #064e3b !important;
-  color: #a7f3d0 !important;
-  border-color: #065f46 !important;
-}
-
-/* 符号插入面板 */
+/* ===== 符号面板 ===== */
 .symbol-panel-wrapper {
-  position: fixed;
-  z-index: 200;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
 }
-
 .symbol-panel-overlay {
   position: fixed;
   inset: 0;
-  z-index: -1;
-}
-
-.symbol-panel {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  padding: 4px;
-  min-width: 360px;
-  max-width: 480px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.symbol-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px 4px 12px;
-}
-
-.symbol-panel__title {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.symbol-panel__close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 16px;
-  color: var(--color-text-muted);
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.symbol-panel__close:hover {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text);
-}
-
-.symbol-panel__close:active {
-  background: var(--color-border);
-}
-
-.symbol-panel__tabs {
-  display: flex;
-  gap: 2px;
-  padding: 4px 4px 0;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 4px;
-}
-
-.symbol-panel__tab {
-  padding: 4px 10px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px 4px 0 0;
-}
-
-.symbol-panel__tab--active {
-  color: var(--color-text);
-  background: var(--color-bg-tertiary);
-}
-
-.symbol-panel__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-  gap: 2px;
-  padding: 4px;
-}
-
-.symbol-panel[data-tab="kaomoji"] .symbol-panel__grid,
-.symbol-panel--kaomoji .symbol-panel__grid {
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-}
-
-.symbol-panel__item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 36px;
-  font-size: 16px;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.symbol-panel__item:hover {
-  background: var(--color-bg-tertiary);
-}
-
-.symbol-panel__item:active {
-  background: var(--color-border);
-}
-
-[data-theme="dark"] .typora-editor .milkdown .milkdown-code-block .tools .tools-button-group button.failed {
-  background: #7f1d1d !important;
-  color: #fca5a5 !important;
-  border-color: #991b1b !important;
-}
-
-/* Crepe block-edit 菜单 tab 内容隔离 */
-.milkdown .milkdown-slash-menu .menu-groups {
-  overflow: hidden;
-  max-height: none;
-}
-
-.milkdown .milkdown-slash-menu .menu-group {
-  overflow-y: auto;
-  max-height: 380px;
-}
-
-.milkdown .milkdown-slash-menu .menu-group:not(.milkdown-tab-active) {
-  display: none;
+  z-index: 90;
 }

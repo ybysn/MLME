@@ -1,10 +1,9 @@
 /**
- * 模块职责：全局样式，定义 CSS 变量、两栏布局、面板、Tab 和状态栏样式。
- * 当前范围：基础重置、布局、面板组件外观、侧边栏 Tab、大纲列表。
- * 后续扩展点：主题变量切换（明亮/暗黑）、编辑器内联样式、响应式调整。
+ * MLME Design System — CSS 变量
+ * 融合 Notion 暖色调 + Vercel 阴影系统 + Linear 暗色模式亮度堆叠
  */
 
-/* ===== 全局重置 ===== */
+/* ===== 基础重置 ===== */
 *,
 *::before,
 *::after {
@@ -13,42 +12,126 @@
   padding: 0;
 }
 
-:root {
-  /* 基础色调 - 浅色主题 */
-  --color-bg: #ffffff;
-  --color-bg-secondary: #f5f6f8;
-  --color-bg-tertiary: #ebeef2;
-  --color-border: #d5d8dd;
-  --color-border-light: #e8eaef;
-  --color-text: #1a1a2e;
-  --color-text-secondary: #4a4f5e;
-  --color-text-muted: #8a8fa0;
-  --color-accent: #4a7cf7;
-  --color-accent-hover: #3a6ae6;
-  --color-status-bar-bg: #f0f2f5;
-  --color-status-bar-text: #6a6f7e;
+/* ===== 浅色主题（默认） ===== */
+:root,
+[data-theme="light"] {
+  /* ── 背景层级（从浅到深） ── */
+  --color-bg:                #ffffff;
+  --color-bg-secondary:      #fafaf8;
+  --color-bg-tertiary:       #f3f2ef;
+  --color-bg-hover:          #eeedeb;
+  --color-bg-active:         #e8e6e3;
 
-  /* 布局尺寸 */
-  --sidebar-width: 300px;
-  --status-bar-height: 30px;
+  /* ── 文字层级 ── */
+  --color-text:              #1a1a18;
+  --color-text-secondary:    #5e5c58;
+  --color-text-muted:        #9a9790;
+  --color-text-placeholder:  #b8b5ae;
 
-  /* 字体 */
-  --font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui,
-    -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-size-xs: 13px;
-  --font-size-sm: 14px;
-  --font-size-base: 15px;
-  --font-size-lg: 16px;
-  --font-size-xl: 18px;
+  /* ── 边框 ── */
+  --color-border:            rgba(0,0,0,0.08);
+  --color-border-light:      rgba(0,0,0,0.05);
+  --color-border-strong:     rgba(0,0,0,0.12);
 
-  /* 间距 */
-  --spacing-xs: 5px;
-  --spacing-sm: 10px;
-  --spacing-md: 14px;
-  --spacing-lg: 18px;
+  /* ── 强调色（保留蓝色但调暖） ── */
+  --color-accent:            #3b6df0;
+  --color-accent-hover:      #2b5cdb;
+  --color-accent-bg:         #eff3ff;
+  --color-accent-text:       #3b6df0;
+
+  /* ── 状态栏 ── */
+  --color-status-bar-bg:     #fafaf8;
+  --color-status-bar-text:   #7a7670;
+
+  /* ── 阴影系统（Vercel 风格多层叠加） ── */
+  --shadow-xs:  0 0 0 1px rgba(0,0,0,0.06);
+  --shadow-sm:  0 0 0 1px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 0 0 1px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04),
+                0 6px 12px -4px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.8);
+  --shadow-lg:  0 0 0 1px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.06),
+                0 12px 24px -8px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.9);
+  --shadow-xl:  0 0 0 1px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.06),
+                0 20px 40px -12px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.9);
+
+  /* ── 布局尺寸 ── */
+  --sidebar-width: 280px;
+  --status-bar-height: 32px;
+
+  /* ── 字体 ── */
+  --font-family: "Inter", "Microsoft YaHei", "PingFang SC",
+    system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: "JetBrains Mono", "Cascadia Code", "Fira Code",
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+
+  /* ── 间距 ── */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
   --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+
+  /* ── 圆角 ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
+
+  /* ── 过渡 ── */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
 }
 
+/* ===== 深色主题 ===== */
+[data-theme="dark"] {
+  /* ── 背景层级（Linear 风格亮度堆叠） ── */
+  --color-bg:                #0d0d0c;
+  --color-bg-secondary:      #131312;
+  --color-bg-tertiary:       #1a1a18;
+  --color-bg-hover:          #222220;
+  --color-bg-active:         #2a2a28;
+
+  /* ── 文字层级 ── */
+  --color-text:              #e8e6e3;
+  --color-text-secondary:    #b5b2ac;
+  --color-text-muted:        #7a7670;
+  --color-text-placeholder:  #5c5a55;
+
+  /* ── 边框（半透明白色，Linear 风格） ── */
+  --color-border:            rgba(255,255,255,0.07);
+  --color-border-light:      rgba(255,255,255,0.04);
+  --color-border-strong:     rgba(255,255,255,0.10);
+
+  /* ── 强调色 ── */
+  --color-accent:            #5b8af7;
+  --color-accent-hover:      #7aa2ff;
+  --color-accent-bg:         rgba(91,138,247,0.12);
+  --color-accent-text:       #7aa2ff;
+
+  /* ── 状态栏 ── */
+  --color-status-bar-bg:     #131312;
+  --color-status-bar-text:   #7a7670;
+
+  /* ── 阴影（深色模式下几乎不可见，用背景亮度替代） ── */
+  --shadow-xs:  0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-sm:  0 0 0 1px rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:  0 0 0 1px rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.3),
+                0 8px 16px -4px rgba(0,0,0,0.4);
+  --shadow-lg:  0 0 0 1px rgba(255,255,255,0.08), 0 4px 8px rgba(0,0,0,0.4),
+                0 16px 32px -8px rgba(0,0,0,0.5);
+  --shadow-xl:  0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.5),
+                0 24px 48px -12px rgba(0,0,0,0.6);
+}
+
+/* ===== 全局 ===== */
 html,
 body,
 #root {
@@ -65,4 +148,27 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 选中文字 */
+::selection {
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent-text);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }

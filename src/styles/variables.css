@@ -92,6 +92,8 @@
 
 /* ===== 深色主题 ===== */
 [data-theme="dark"] {
+  color-scheme: dark;
+
   /* ── 背景层级（Linear 风格亮度堆叠） ── */
   --color-bg:                #0d0d0c;
   --color-bg-secondary:      #131312;

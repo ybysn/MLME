@@ -65,6 +65,7 @@
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
+  color-scheme: light;
   transition: background-color var(--transition-fast),
               color var(--transition-fast);
   letter-spacing: -0.01em;
@@ -477,6 +478,11 @@
 
 [data-theme="dark"] .typora-editor {
   background-color: var(--color-bg);
+}
+
+/* 原生下拉框深色 */
+[data-theme="dark"] .editor-toolbar__select {
+  color-scheme: dark;
 }
 
 /* Milkdown Crepe 深色主题变量覆盖 */

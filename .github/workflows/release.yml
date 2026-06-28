@@ -30,6 +30,9 @@ jobs:
 
       - run: pnpm build
 
+      - run: cargo check
+        working-directory: src-tauri
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,6 +66,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm build
+
+      - run: cargo check
+        working-directory: src-tauri
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -101,6 +107,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm build
+
+      - run: cargo check
+        working-directory: src-tauri
 
       - uses: tauri-apps/tauri-action@v0
         env:

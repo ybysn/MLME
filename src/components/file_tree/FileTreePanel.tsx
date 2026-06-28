@@ -78,7 +78,7 @@ function WorkspaceTreeItem({
 }
 
 export function FileTreePanel({
-  fileName, isDirty, isEditing, currentPath, recentFiles,
+  fileName, isEditing, currentPath, recentFiles,
   currentWorkspacePath, workspaceName, workspaceTree,
   onNew, onOpen, onSave, onSaveAs, onOpenRecentFile,
   onOpenWorkspace, onOpenWorkspaceFile,

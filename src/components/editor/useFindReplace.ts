@@ -92,8 +92,6 @@ export function useFindReplace({
     setActiveMatchIndex(0);
     if (viewMode === "wysiwyg" || viewMode === "split") {
       typoraEditorRef.current?.updateWritingFind(findQuery, caseSensitive, 0);
-    } else if (viewMode === "wysiwyg" || viewMode === "split") {
-      typoraEditorRef.current?.updateWritingFind('', false, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [findQuery, caseSensitive]);
